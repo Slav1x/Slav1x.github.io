@@ -1,0 +1,28 @@
+# Roblox place/model files saved from Studio (backups, local builds).
+# The live place stays in Studio / on Roblox; code lives in src/.
+/*.rbxl
+/*.rbxlx
+/*.rbxl.lock
+/*.rbxlx.lock
+/build/
+/backups/
+
+# Rojo
+sourcemap.json
+
+# Roblox Studio lock files anywhere
+*.rbxl.lock
+*.rbxlx.lock
+
+# Tooling / editors
+roblox.yml
+roblox.toml
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.code-workspace
+
+# OS junk
+.DS_Store
+Thumbs.db
+desktop.ini
