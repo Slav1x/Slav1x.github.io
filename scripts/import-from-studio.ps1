@@ -1,13 +1,10 @@
 <#
 .SYNOPSIS
-    Pulls scripts/instances from a saved Roblox place file into src/ using `rojo syncback`.
+    Pulls the safely mapped scripts from a saved Roblox place file into src/.
 
 .DESCRIPTION
-    Read-only for the place file: it never modifies the .rbxl you pass in, and it never
-    touches Roblox Studio. It only writes files under src/ in this repository.
-
-    GUIs, models and other non-script instances are written as .rbxmx (XML text) instead
-    of binary .rbxm, so they can be diffed and scripts nested inside them stay readable.
+    Read-only for the place file and Studio. It writes repository files covered by
+    default.project.json. GUI, Workspace, and ServerStorage snapshots are separate.
 
 .EXAMPLE
     .\scripts\import-from-studio.ps1 -Place "C:\RobloxBackups\MyGame.rbxl"
@@ -34,14 +31,11 @@ if (-not $DryRun) {
     }
 }
 
-# Write non-script instances as XML (.rbxmx) rather than binary (.rbxm).
-$env:ROJO_SYNCBACK_DEBUG = "1"
-
 if ($DryRun) {
     rojo syncback default.project.json --input $Place --dry-run --list
 } else {
     rojo syncback default.project.json --input $Place --non-interactive --list
     Write-Host ""
     Write-Host "Done. Review with 'git status' and 'git diff' before committing." -ForegroundColor Green
-    Write-Host "To undo everything this import wrote: git restore . ; git clean -fd src" -ForegroundColor Yellow
+    Write-Host "Review every changed file before committing or connecting Studio." -ForegroundColor Yellow
 }

@@ -1,0 +1,113 @@
+[
+  {
+    "path": "Workspace.EggPreviewPresentation",
+    "className": "Script",
+    "file": "studio-only/Workspace/EggPreviewPresentation.server.luau"
+  },
+  {
+    "path": "Workspace.EggPreviewConfig",
+    "className": "ModuleScript",
+    "file": "studio-only/Workspace/EggPreviewConfig.luau"
+  },
+  {
+    "path": "Workspace.terrain.Model.Model.Model.Lake.Water.WaterController",
+    "className": "Script",
+    "file": "studio-only/snapshots/Workspace/003-WaterController.server.luau"
+  },
+  {
+    "path": "Workspace.terrain.Rig.Animate",
+    "className": "LocalScript",
+    "file": "studio-only/snapshots/Workspace/004-Animate.client.luau"
+  },
+  {
+    "path": "Workspace.terrain.Rig.Animate",
+    "className": "LocalScript",
+    "file": "studio-only/snapshots/Workspace/005-Animate.client.luau"
+  },
+  {
+    "path": "Workspace.BestWalkAnimR6.README",
+    "className": "ModuleScript",
+    "file": "studio-only/snapshots/Workspace/006-README.luau"
+  },
+  {
+    "path": "Workspace.UI Animation Pack - by JakeDev.READ",
+    "className": "Script",
+    "file": "studio-only/snapshots/Workspace/007-READ.server.luau"
+  },
+  {
+    "path": "Workspace.UI Animation Pack - by JakeDev.UltimateUIPack.ButtonEffects.Bounce On Click.Tween",
+    "className": "LocalScript",
+    "file": "studio-only/snapshots/Workspace/008-Tween.client.luau"
+  },
+  {
+    "path": "Workspace.UI Animation Pack - by JakeDev.UltimateUIPack.ButtonEffects.Color On Hover.Tween",
+    "className": "LocalScript",
+    "file": "studio-only/snapshots/Workspace/009-Tween.client.luau"
+  },
+  {
+    "path": "Workspace.UI Animation Pack - by JakeDev.UltimateUIPack.ButtonEffects.Hover And Click.Tween",
+    "className": "LocalScript",
+    "file": "studio-only/snapshots/Workspace/010-Tween.client.luau"
+  },
+  {
+    "path": "Workspace.UI Animation Pack - by JakeDev.UltimateUIPack.ButtonEffects.Icon Wiggle On Hover.Tween",
+    "className": "LocalScript",
+    "file": "studio-only/snapshots/Workspace/011-Tween.client.luau"
+  },
+  {
+    "path": "Workspace.UI Animation Pack - by JakeDev.UltimateUIPack.ButtonEffects.Rotate Hover.Tween",
+    "className": "LocalScript",
+    "file": "studio-only/snapshots/Workspace/012-Tween.client.luau"
+  },
+  {
+    "path": "Workspace.UI Animation Pack - by JakeDev.UltimateUIPack.ButtonEffects.Stroke Scale On Hover.Tween",
+    "className": "LocalScript",
+    "file": "studio-only/snapshots/Workspace/013-Tween.client.luau"
+  },
+  {
+    "path": "Workspace.UI Animation Pack - by JakeDev.UltimateUIPack.ButtonEffects.Stroke Visible On Hover.Tween",
+    "className": "LocalScript",
+    "file": "studio-only/snapshots/Workspace/014-Tween.client.luau"
+  },
+  {
+    "path": "Workspace.UI Animation Pack - by JakeDev.UltimateUIPack.ButtonEffects.Stroke Visible On Hover.Tween",
+    "className": "LocalScript",
+    "file": "studio-only/snapshots/Workspace/015-Tween.client.luau"
+  },
+  {
+    "path": "Workspace.UI Animation Pack - by JakeDev.UltimateUIPack.FrameOpenings.Buttons.PopUp_BTN.Tween",
+    "className": "LocalScript",
+    "file": "studio-only/snapshots/Workspace/016-Tween.client.luau"
+  },
+  {
+    "path": "Workspace.UI Animation Pack - by JakeDev.UltimateUIPack.FrameOpenings.Buttons.Bounce_BTN.Tween",
+    "className": "LocalScript",
+    "file": "studio-only/snapshots/Workspace/017-Tween.client.luau"
+  },
+  {
+    "path": "Workspace.UI Animation Pack - by JakeDev.UltimateUIPack.FrameOpenings.Buttons.Fov_BTN.Tween",
+    "className": "LocalScript",
+    "file": "studio-only/snapshots/Workspace/018-Tween.client.luau"
+  },
+  {
+    "path": "Workspace.UI Animation Pack - by JakeDev.UltimateUIPack.FrameOpenings.Buttons.RotateIn_BTN.Tween",
+    "className": "LocalScript",
+    "file": "studio-only/snapshots/Workspace/019-Tween.client.luau"
+  },
+  {
+    "path": "Workspace.UI Animation Pack - by JakeDev.UltimateUIPack.MainOpener.Manager",
+    "className": "LocalScript",
+    "file": "studio-only/snapshots/Workspace/020-Manager.client.luau"
+  },
+  {
+    "path": "Workspace.VFX.SpawnPresentation",
+    "className": "Script",
+    "file": "studio-only/Workspace/VFX/SpawnPresentation.server.luau"
+  },
+  {
+    "path": "Workspace.VFX.StudFlowerMotion",
+    "className": "Script",
+    "file": "studio-only/Workspace/VFX/StudFlowerMotion.server.luau"
+  }
+]
+

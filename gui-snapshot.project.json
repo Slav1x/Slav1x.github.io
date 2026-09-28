@@ -1,0 +1,18 @@
+{
+  "name": "Skip a Pebble GUI snapshot",
+  "tree": {
+    "$className": "DataModel",
+    "StarterGui": {
+      "$className": "StarterGui",
+      "$properties": {
+        "ScreenOrientation": "Sensor",
+        "ShowDevelopmentGui": false
+      },
+      "$attributes": {
+        "UIOrganization20260924": true
+      },
+      "$ignoreUnknownInstances": true,
+      "$path": "studio-only/StarterGuiAssets"
+    }
+  }
+}

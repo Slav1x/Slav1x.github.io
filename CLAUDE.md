@@ -25,29 +25,33 @@ is part of its working systems.
    folder renames the instance in Studio and can silently break those references.
 5. **Respect DataStores.** Never change DataStore names, keys, or saved-data shape without an
    explicit request and a migration plan — that can wipe or corrupt player data.
-6. **Not everything is in this repo.** Only the services listed below are synced. Workspace
-   (maps/parts), Lighting, SoundService, Teams, etc. live only in the Studio place file.
-   Code may reference instances that don't exist here; that is expected — don't "fix" it by
-   creating them.
+6. **Only part of the game is live synced.** `default.project.json` deliberately maps 186
+   current scripts in ReplicatedStorage, ServerScriptService, and StarterPlayer. The other
+   104 current scripts are read-only snapshots under `studio-only/`. GUI layouts, Workspace
+   models, ServerStorage backups, Lighting, SoundService, and Teams stay in the Studio
+   place file. Code may reference instances absent from the Rojo tree; do not create
+   replacements based on those references.
 7. **You cannot run Roblox Studio here.** Changes can't be play-tested in the cloud. Say what
    the user should test in Studio after syncing, and don't claim something works in-game.
 
 ## How files map to Roblox (Rojo 7)
 
-Project file: `default.project.json`. Every service node sets `"$ignoreUnknownInstances": true`,
-so Rojo **adds/updates** instances that exist in `src/` but **never deletes** instances that
-exist only in Studio.
+Project file: `default.project.json`. Mapped nodes set `"$ignoreUnknownInstances": true`.
+Always inspect Rojo's proposed changes on a copy before connecting a live place.
 
 | Folder in repo                            | Roblox location                          |
 | ----------------------------------------- | ---------------------------------------- |
-| `src/ReplicatedFirst`                     | `ReplicatedFirst`                        |
-| `src/ReplicatedStorage`                   | `ReplicatedStorage`                      |
+| `src/ReplicatedStorage/Modules`           | `ReplicatedStorage.Modules`              |
+| `src/ReplicatedStorage/Shared`            | `ReplicatedStorage.Shared`               |
+| `src/ReplicatedStorage/SharedUI`          | `ReplicatedStorage.SharedUI`             |
 | `src/ServerScriptService`                 | `ServerScriptService`                    |
-| `src/ServerStorage`                       | `ServerStorage`                          |
-| `src/StarterGui`                          | `StarterGui`                             |
-| `src/StarterPack`                         | `StarterPack`                            |
 | `src/StarterPlayer/StarterPlayerScripts`  | `StarterPlayer.StarterPlayerScripts`     |
 | `src/StarterPlayer/StarterCharacterScripts` | `StarterPlayer.StarterCharacterScripts` |
+
+`studio-only/Workspace`, `studio-only/snapshots`,
+`studio-only/ServerStorageScripts`, and `studio-only/StarterGuiAssets` are review
+snapshots and are **not** part of the live Rojo project. Changes there need a separately
+reviewed Studio/MCP import; editing those files alone will not change the game.
 
 File naming (Rojo conventions):
 
@@ -77,7 +81,8 @@ These tools may not be installed in a cloud session; if they aren't, skip them a
 
 1. Code changes are made on a branch here (cloud or local) and pushed to GitHub.
 2. On the Windows PC: `git pull`, `rojo serve`, connect the Rojo plugin in Studio, play-test.
-3. If the user edits a script directly in Studio, that change must be brought back into
-   `src/` (edit the file, or re-run `rojo syncback`) or the next Rojo sync will overwrite it.
+3. If the user or Claude Desktop edits a mapped script directly in Studio, stop Rojo,
+   download a fresh copy, and re-run `rojo syncback` from that copy before the next sync.
+   Review the diff and proposed Studio changes. See `docs/IMPORTING.md`.
 
 See `docs/IMPORTING.md` for the one-time import of the existing game and the day-to-day loop.

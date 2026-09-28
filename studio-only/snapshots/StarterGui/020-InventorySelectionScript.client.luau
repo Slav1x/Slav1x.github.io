@@ -1,0 +1,775 @@
+-- Inventory behavior. The shell and CardTemplate are editable Studio instances.
+local Players = game:GetService("Players")
+local RS = game:GetService("ReplicatedStorage")
+local TweenService = game:GetService("TweenService")
+local UIS = game:GetService("UserInputService")
+local Rocks = require(RS.Shared.RockCatalog)
+local Traits = require(RS.Shared.TraitCatalog)
+local Mastery = require(RS.Shared.MasteryConfig)
+local Pets = require(RS.Shared.PetCatalog)
+local Abilities = require(RS.Shared.AbilityCatalog)
+local RockAppearance = require(RS.Shared.RockAppearance)
+local Remotes = require(RS.Shared.Remotes)
+local PetViewport = require(RS.SharedUI.PetViewport)
+local UISounds = require(RS.SharedUI.UISounds)
+local player = Players.LocalPlayer
+local Client = player:WaitForChild("PlayerScripts"):WaitForChild("Client")
+local Store = require(Client:WaitForChild("ProfileStore"))
+local root = script.Parent
+local closeButton = root:FindFirstChild("CloseButton") or root:FindFirstChild("Close")
+local main = root.Main
+local grid = main.Grid
+local layout = grid.Layout
+local categories = main.Categories
+local menu = main.RarityMenu
+local details = root.Details
+local template = root.CardTemplate
+local navy = Color3.fromRGB(8, 26, 48)
+local white = Color3.fromRGB(250, 253, 255)
+local muted = Color3.fromRGB(180, 211, 236)
+local rank = {Common=1, Uncommon=2, Rare=3, Epic=4, Legendary=5, Mythical=6, Exclusive=7}
+local category = "ALL"
+local sortMode = "RARITY"
+local sortDescending = true
+local selected
+local pending
+local favorites = table.clone(Store.get().inventoryFavorites or {})
+local byKey = {}
+local visibleItems = {}
+local rendered = {}
+local portrait = false
+local columns = 5
+local suppressSelectionUntil = 0
+
+local allItems = {}
+for _, group in {{Rocks.Rocks, "rock"}, {Pets.Pets, "pet"}, {Abilities.Abilities, "ability"}} do
+    for _, data in group[1] do
+        table.insert(allItems, {data=data, kind=group[2], key=group[2]..":"..data.id})
+    end
+end
+local function tw(object, properties, duration, style)
+    local tween = TweenService:Create(object, TweenInfo.new(duration or .14, style or Enum.EasingStyle.Quad, Enum.EasingDirection.Out), properties)
+    tween:Play()
+    return tween
+end
+local function color(entry)
+    return Rocks.RarityColors[entry.data.rarity] or entry.data.color or Color3.fromRGB(218, 132, 246)
+end
+local function cardAccent(entry)
+    if entry.data.id == "magma_skimmer" then return Color3.fromRGB(255, 78, 67) end
+    if entry.kind == "ability" then return Color3.fromRGB(73, 206, 255) end
+    local itemColor = entry.data.color
+    if typeof(itemColor) == "Color3" then
+        local _, saturation, value = itemColor:ToHSV()
+        if saturation >= .3 and value >= .42 then return itemColor end
+    end
+    return Rocks.RarityColors[entry.data.rarity] or Color3.fromRGB(170, 192, 211)
+end
+local function owned(entry)
+    if entry.kind == "ability" then return Store.ownsAbility(entry.data.id) end
+    if entry.kind == "pet" then return Store.ownsPet(entry.data.id) end
+    if entry.instanceId then
+        local copy = (Store.get().traitedRocks or {})[entry.instanceId]
+        return copy ~= nil and copy.rockId == entry.data.id and Store.ownsRock(entry.data.id)
+    end
+    return Store.ownsRock(entry.data.id) and Store.untraitedRockCount(entry.data.id) > 0
+end
+local function equipped(entry)
+    local state = Store.get()
+    if entry.kind == "ability" then return state.abilityEquipped == entry.data.id end
+    if entry.kind == "pet" then return state.petEquipped == entry.data.id end
+    return state.rockEquipped == entry.data.id and state.rockEquippedInstance == entry.instanceId
+end
+local function displayName(entry)
+    return (entry.variant == "Enchanted" and "Enchanted " or "") .. entry.data.name
+end
+local function setArt(image, fallback, entry)
+    local old = image:FindFirstChild("ModelPreview")
+    if old then old:Destroy() end
+    if entry and entry.kind == "pet" and entry.data.model then
+        local viewport = Instance.new("ViewportFrame")
+        viewport.Name = "ModelPreview"
+        viewport.Size = UDim2.fromScale(1, 1)
+        viewport.BackgroundTransparency = 1
+        viewport.Ambient = Color3.fromRGB(205, 211, 222)
+        viewport.LightColor = Color3.fromRGB(255, 244, 224)
+        viewport.LightDirection = Vector3.new(-.5, -1, -.7)
+        viewport.ZIndex = image.ZIndex
+        viewport.Parent = image
+        if PetViewport.populate(viewport, entry.data.model) then
+            image.Image = ""
+            image.Visible = true
+            fallback.Visible = false
+            return
+        end
+        viewport:Destroy()
+    end
+    if entry and (entry.kind == "rock" or entry.kind == "ability") then
+        local model
+        if entry.kind == "rock" then
+            model = RockAppearance.clone(entry.data.id, entry.variant or "Normal")
+        else
+            local models = RS:FindFirstChild("AbilityModels")
+            local template = models and models:FindFirstChild(entry.data.modelId or entry.data.id)
+            if template and template:IsA("Model") then model = template:Clone() end
+        end
+        if model then
+            image.Image = ""
+            image.Visible = true
+            fallback.Visible = false
+            local viewport = Instance.new("ViewportFrame")
+            viewport.Name = "ModelPreview"
+            viewport.Size = UDim2.fromScale(1, 1)
+            viewport.BackgroundTransparency = 1
+            viewport.Ambient = Color3.fromRGB(190, 201, 220)
+            viewport.LightColor = Color3.fromRGB(255, 242, 220)
+            viewport.LightDirection = Vector3.new(-1, -1, -1)
+            viewport.ZIndex = image.ZIndex
+            viewport.Parent = image
+            local world = Instance.new("WorldModel")
+            world.Parent = viewport
+            model:PivotTo(CFrame.identity)
+            for _, part in model:GetDescendants() do
+                if part:IsA("BasePart") then part.Anchored=true; part.CanCollide=false end
+            end
+            model.Parent = world
+            local bounds, size = model:GetBoundingBox()
+            local radius = math.max(size.X, size.Y, size.Z)
+            local camera = Instance.new("Camera")
+            camera.FieldOfView = 34
+            camera.CFrame = CFrame.lookAt(bounds.Position + Vector3.new(radius * 1.5, radius * .85, radius * 2.3), bounds.Position)
+            camera.Parent = viewport
+            viewport.CurrentCamera = camera
+            return
+        end
+    end
+    local asset = entry and entry.data.image or ""
+    image.Image = asset
+    image.Visible = asset ~= ""
+    fallback.Text = entry and (entry.data.icon or "◆") or "◆"
+    fallback.Visible = asset == ""
+end
+local function setFavorite(key)
+    if not key then return end
+    favorites[key] = not favorites[key] or nil
+    if Store.hasLoaded() then Remotes.RequestFavorite:FireServer(key, favorites[key] == true) end
+end
+local function setButtonColor(button, base)
+    button.BackgroundColor3 = base
+end
+local function updateDetails(animate)
+    local entry = selected and byKey[selected]
+    if entry and not owned(entry) then selected = nil; entry = nil end
+    local detailColor = entry and color(entry) or muted
+    setArt(details.PreviewBox.Art, details.PreviewBox.Icon, entry)
+    if not portrait then
+        local rockPreview = entry and entry.kind == "rock"
+        details.PreviewBox.Art.Position = rockPreview and UDim2.fromOffset(27, -25) or UDim2.fromOffset(27, -4)
+        details.PreviewBox.Art.Size = rockPreview and UDim2.fromOffset(304, 255) or UDim2.fromOffset(304, 207)
+        details.PreviewBox.Icon.Position = details.PreviewBox.Art.Position
+        details.PreviewBox.Icon.Size = details.PreviewBox.Art.Size
+    end
+    details.PreviewBox.Sunrays.ImageColor3 = detailColor
+    details.PreviewBox.Sunrays.ImageTransparency = entry and .87 or .94
+    details.ItemName.Text = entry and displayName(entry) or "SELECT AN ITEM"
+    details.RarityChip.Label.Text = entry and string.upper(entry.data.rarity) or "—"
+    details.RarityChip.BackgroundColor3 = entry and detailColor:Lerp(navy, .5) or Color3.fromRGB(71, 93, 117)
+    local stats = {}
+    if entry then
+        local data = entry.data
+        if entry.kind == "rock" then
+            local finalStats = Rocks.resolveStats(data.id, entry.traitId, entry.variant)
+            table.insert(stats, string.format("%.2fx STRENGTH", finalStats.strengthMultiplier))
+            table.insert(stats, string.upper(Rocks.characteristicLabel(data.id)))
+        end
+        if data.moneyBonus and data.moneyBonus ~= 0 then table.insert(stats, string.format("+%g%% MONEY", data.moneyBonus*100)) end
+        if entry.kind == "pet" and data.speedBonus and data.speedBonus ~= 0 then table.insert(stats, string.format("%.2fx STRENGTH", 1 + data.speedBonus)) end
+        if data.magnetBonus and data.magnetBonus ~= 0 then table.insert(stats, "+"..data.magnetBonus.." MAGNET") end
+        if data.luckBonus and data.luckBonus ~= 0 then table.insert(stats, string.format("+%g%% LUCK", data.luckBonus*100)) end
+        if entry.traitId then table.insert(stats, string.upper(Traits.label(entry.traitId))) end
+        if entry.variant == "Enchanted" then table.insert(stats, "ENCHANTED · 1.3× SPECIALTY") end
+        if entry.kind=="rock" then
+            local progress=Mastery.progress(entry.instanceId and (Store.get().rockMastery or {})[entry.instanceId])
+            table.insert(stats, string.format("MASTERY %d · %s",progress.level,progress.needed==0 and "MAX" or (progress.into.."/"..progress.needed.." XP")))
+        end
+        if entry.kind == "ability" then table.insert(stats, entry.data.id == "hermes_rock" and "2× ROCK SPEED" or "8s FLIGHT • HOLD SPACE") end
+    end
+    details.Stats.Text = table.concat(stats, "  •  ")
+    if entry then
+        local kind = entry.kind
+        local trait = entry.traitId and (Traits.label(entry.traitId).." variant. ") or ""
+        local ownership = entry.kind == "rock" and (entry.instanceId and "Individual rock." or "Copies owned: "..tostring(entry.displayCount or 1)..".") or (entry.kind == "pet" and ("Copies owned: "..tostring((Store.get().petCounts or {})[entry.data.id] or 1)..".") or "Part of your collection.")
+        details.Description.Text = entry.data.description or ("A "..entry.data.rarity:lower().." "..kind..". "..trait..ownership)
+    else
+        details.Description.Text = Store.hasLoaded() and "Choose a rock or pet to see its details." or "Loading your inventory..."
+    end
+    local canEquip = entry and Store.hasLoaded() and not pending and (entry.kind ~= "rock" or not equipped(entry))
+    details.Equip.Active = canEquip and true or false
+    local equipColor = canEquip and Color3.fromRGB(5, 207, 88)
+        or (entry and equipped(entry) and Color3.fromRGB(22, 166, 96) or Color3.fromRGB(67, 102, 115))
+    setButtonColor(details.Equip, equipColor)
+    details.Equip.Text = not Store.hasLoaded() and "LOADING..." or (pending and pending == selected and "EQUIPPING..." or (entry and (equipped(entry) and (entry.kind ~= "rock" and "UNEQUIP" or "EQUIPPED") or "EQUIP") or "SELECT ITEM"))
+    details.Favorite.Text = ""
+    details.Favorite.Active = entry ~= nil
+    details.Favorite.Star.Text = entry and favorites[entry.key] and "★" or "☆"
+    details.Favorite.Caption.Text = entry and favorites[entry.key] and "FAVORITED" or "FAVORITE"
+    details.Favorite.Star.TextColor3 = entry and favorites[entry.key] and Color3.fromRGB(255, 222, 93) or white
+    if animate and entry then
+        local art = details.PreviewBox.Art
+        art.ImageTransparency = .45
+        tw(art, {ImageTransparency=0}, .18)
+    end
+end
+local function makeEntries()
+    local entries = {}
+    byKey = {}
+    local count = 0
+    for _, base in allItems do
+        if base.kind == "rock" and Store.ownsRock(base.data.id) then
+            count += math.max(1, Store.rockCount(base.data.id))
+            local untraited = Store.untraitedRockCount(base.data.id)
+            if untraited > 0 then
+                local item = {data=base.data, kind="rock", key=base.key, displayCount=untraited}
+                table.insert(entries, item)
+                byKey[item.key] = item
+            end
+        elseif (base.kind == "pet" and Store.ownsPet(base.data.id)) or (base.kind == "ability" and Store.ownsAbility(base.data.id)) then
+            count += 1
+            table.insert(entries, base)
+            byKey[base.key] = base
+        end
+    end
+    for instanceId, copy in Store.get().traitedRocks or {} do
+        local source
+        for _, candidate in allItems do
+            if candidate.kind == "rock" and candidate.data.id == copy.rockId then source = candidate; break end
+        end
+        if source and Store.ownsRock(copy.rockId) and (Traits.get(copy.traitId) or copy.variant == "Enchanted" or copy.mastered == true) then
+            local item = {data=source.data, kind="rock", key="traited:"..instanceId, instanceId=instanceId, traitId=copy.traitId, variant=copy.variant or "Normal", displayCount=1}
+            table.insert(entries, item)
+            byKey[item.key] = item
+        end
+    end
+    return entries, count
+end
+local inventoryDirty=true
+local refresh
+local function renderCard(entry, order)
+    local card = template:Clone()
+    card.Name = "Item_"..string.gsub(entry.key, "[^%w_]", "_")
+    card.Visible = true
+    card.LayoutOrder = order
+    card.Parent = grid
+    local rarityColor = color(entry)
+    card.BackgroundColor3 = rarityColor:Lerp(navy, .78)
+    local accent = cardAccent(entry)
+    card.Outline.Color = accent
+    card.Outline.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    card.Outline.Thickness = 3.5
+    card.Outline.Transparency = 0
+    card.SelectedStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    card.SelectedStroke.Enabled = selected == entry.key
+    setArt(card.Art, card.Icon, entry)
+    card.ItemName.Text = displayName(entry)
+    card.Rarity.Text = entry.kind == "ability" and "ABILITY" or entry.data.rarity
+    card.Rarity.TextColor3 = rarityColor:Lerp(white, .25)
+    card.Favorite.Text = ""
+    local star = card.Favorite:FindFirstChild("StarImage")
+    if star then star.ImageColor3 = favorites[entry.key] and Color3.fromRGB(255, 226, 76) or white end
+    card.Equipped.Visible = equipped(entry)
+    card.Quantity.Text = entry.variant == "Enchanted" and "✦ ENCHANTED" or entry.kind == "ability" and "OWNED" or entry.traitId and ("✦ "..Traits.label(entry.traitId)) or (entry.kind == "rock" and "×"..entry.displayCount or entry.kind == "pet" and ("×"..tostring((Store.get().petCounts or {})[entry.data.id] or 1)) or "")
+    local width = layout.CellSize.X.Offset
+    card.Art.Position = UDim2.fromOffset(12, portrait and 5 or 10)
+    card.Art.Size = UDim2.fromOffset(width-24, portrait and 76 or 87)
+    card.Icon.Position = card.Art.Position
+    card.Icon.Size = card.Art.Size
+    card.ItemName.Position = UDim2.fromOffset(5, portrait and 84 or 95)
+    card.ItemName.Size = UDim2.fromOffset(width-10, portrait and 30 or 33)
+    card.ItemName.TextSize = portrait and 16 or 18
+    card.Rarity.Position = UDim2.fromOffset(5, portrait and 115 or 129)
+    card.Rarity.Size = UDim2.fromOffset(width-10, portrait and 14 or 17)
+    card.Rarity.TextSize = portrait and 12 or 15
+    card.Favorite.Position = UDim2.fromOffset(width-33, 5)
+    card.Quantity.Position = UDim2.fromOffset(6, portrait and 65 or 69)
+    card.MouseEnter:Connect(function() tw(card.ButtonScale, {Scale=1.035}, .1) end)
+    card.MouseLeave:Connect(function() tw(card.ButtonScale, {Scale=1}, .1) end)
+    card.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then tw(card.ButtonScale, {Scale=.97}, .07) end
+    end)
+    card.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then tw(card.ButtonScale, {Scale=1}, .1) end
+    end)
+    card.Favorite.Activated:Connect(function()
+        suppressSelectionUntil = os.clock()+.16
+        setFavorite(entry.key)
+        refresh()
+    end)
+    card.Activated:Connect(function()
+        if os.clock() < suppressSelectionUntil then return end
+        selected = entry.key
+        UISounds.play("Tab")
+        refresh()
+        updateDetails(true)
+    end)
+    table.insert(rendered, card)
+end
+refresh = function()
+    inventoryDirty=true
+    if not root.Visible then return end
+    inventoryDirty=false
+    local oldScroll = grid.CanvasPosition
+    for _, card in rendered do card:Destroy() end
+    table.clear(rendered)
+    local entries, count = makeEntries()
+    visibleItems = {}
+    local query = string.lower(main.SearchField.Input.Text)
+    for _, entry in entries do
+        local matchesCategory = category == "ALL" or (category == "ROCKS" and entry.kind == "rock") or (category == "PETS" and entry.kind == "pet") or (category == "SPECIAL" and (entry.kind == "ability" or entry.variant == "Enchanted" or (rank[entry.data.rarity] or 0) >= 5))
+        local searchText = string.lower(displayName(entry).." "..(entry.traitId and Traits.label(entry.traitId) or ""))
+        if matchesCategory and string.find(searchText, query, 1, true) then table.insert(visibleItems, entry) end
+    end
+    table.sort(visibleItems, function(a, b)
+        if sortMode == "FAVORITES" and (favorites[a.key] == true) ~= (favorites[b.key] == true) then
+            if sortDescending then return favorites[a.key] == true end
+            return favorites[b.key] == true
+        end
+        local av, bv
+        if sortMode == "NAME" then
+            av, bv = string.lower(displayName(a)), string.lower(displayName(b))
+        elseif sortMode == "TYPE" then
+            av, bv = a.kind, b.kind
+        else
+            av, bv = rank[a.data.rarity] or 0, rank[b.data.rarity] or 0
+        end
+        if av ~= bv then
+            if sortDescending then return av > bv end
+            return av < bv
+        end
+        local an, bn = string.lower(displayName(a)), string.lower(displayName(b))
+        if an ~= bn then return an < bn end
+        return a.key < b.key
+    end)
+    if selected then
+        local stillVisible = false
+        for _, entry in visibleItems do
+            if entry.key == selected then stillVisible = true; break end
+        end
+        if not stillVisible then selected = nil end
+    end
+    if not selected then
+        for _, entry in visibleItems do if equipped(entry) then selected = entry.key; break end end
+        if not selected and visibleItems[1] then selected = visibleItems[1].key end
+    end
+    for i, entry in visibleItems do renderCard(entry, i) end
+    main.Count.Text = tostring(count).." ITEMS  •  "..tostring(#visibleItems).." SHOWN"
+    main.EmptyMessage.Visible = #visibleItems == 0
+    main.EmptyMessage.Text = Store.hasLoaded() and "No items found" or "Loading your inventory..."
+    for _, name in {"ALL", "ROCKS", "PETS", "SPECIAL"} do
+        local b = categories[name]
+        local active = name == category
+        b.BackgroundColor3 = active and Color3.fromRGB(0, 153, 237) or Color3.fromRGB(25, 65, 105)
+        b.Outline.Color = active and Color3.fromRGB(131, 239, 255) or Color3.fromRGB(7, 28, 52)
+    end
+    local labels = {RARITY="RARITY", NAME="NAME", TYPE="TYPE", FAVORITES="FAVORITES"}
+    main.RarityFilter.SortCaption.Text = portrait and labels[sortMode] or ("SORT: "..labels[sortMode])
+    if sortMode == "NAME" or sortMode == "TYPE" then
+        menu.DIRECTION.Text = sortDescending and "↓  Z to A" or "↑  A to Z"
+    elseif sortMode == "FAVORITES" then
+        menu.DIRECTION.Text = sortDescending and "★  Favorites First" or "☆  Favorites Last"
+    else
+        menu.DIRECTION.Text = sortDescending and "↓  High to Low" or "↑  Low to High"
+    end
+    for _, option in menu:GetChildren() do
+        if option:IsA("TextButton") and option.Name ~= "DIRECTION" then
+            option.BackgroundColor3 = option.Name == sortMode and Color3.fromRGB(0,153,237) or Color3.fromRGB(24,61,101)
+        end
+    end
+    updateDetails(false)
+    task.defer(function() if grid.Parent then grid.CanvasPosition = oldScroll end end)
+end
+
+local function wireButton(button)
+    if not button:IsA("GuiButton") then return end
+    local scale = button:FindFirstChild("ButtonScale")
+    if not scale then return end
+    button.MouseEnter:Connect(function() tw(scale, {Scale=1.035}, .1) end)
+    button.MouseLeave:Connect(function() tw(scale, {Scale=1}, .1) end)
+    button.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then tw(scale, {Scale=.97}, .07) end
+    end)
+    button.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then tw(scale, {Scale=1}, .1) end
+    end)
+end
+for _, b in {closeButton, main.RarityFilter, details.Equip, details.Favorite} do wireButton(b) end
+for _, name in {"ALL", "ROCKS", "PETS", "SPECIAL"} do
+    local b = categories[name]
+    wireButton(b)
+    b.Activated:Connect(function()
+        category = name
+        grid.CanvasPosition = Vector2.zero
+        UISounds.play("Tab")
+        refresh()
+    end)
+end
+for _, item in menu:GetChildren() do
+    if item:IsA("TextButton") then
+        wireButton(item)
+        item.Activated:Connect(function()
+            if item.Name == "DIRECTION" then
+                sortDescending = not sortDescending
+            else
+                sortMode = item.Name
+            end
+            menu.Visible = false
+            grid.CanvasPosition = Vector2.zero
+            UISounds.play("Tab")
+            refresh()
+        end)
+    end
+end
+main.RarityFilter.Activated:Connect(function() menu.Visible = not menu.Visible end)
+main.SearchField.Input:GetPropertyChangedSignal("Text"):Connect(function()
+    grid.CanvasPosition = Vector2.zero
+    refresh()
+end)
+details.Favorite.Activated:Connect(function()
+    if not selected then return end
+    setFavorite(selected)
+    refresh()
+end)
+details.Equip.Activated:Connect(function()
+    local entry = selected and byKey[selected]
+    if not entry or not owned(entry) or not Store.hasLoaded() or pending then return end
+    if entry.kind == "rock" and equipped(entry) then return end
+    pending = entry.key
+    updateDetails(false)
+    if entry.kind == "rock" then
+        Remotes.RequestEquip:FireServer("rock", entry.data.id, entry.instanceId or "untraited")
+    else
+        Remotes.RequestEquip:FireServer(entry.kind, equipped(entry) and "" or entry.data.id)
+    end
+    task.delay(4, function()
+        if pending == entry.key then pending = nil; updateDetails(false); details.Description.Text = "No confirmation yet. Try again." end
+    end)
+end)
+-- Currency/strength rewards arrive on each skip; they do not change inventory cards.
+local inventoryFields={"rocksOwned","rockCounts","traitedRocks","abilitiesOwned","abilityEquipped","rockEquipped","rockEquippedInstance","rockEquippedVariant","petsOwned","petCounts","petEquipped","inventoryFavorites"}
+local lastInventoryState
+local function same(a,b)
+    if a==b then return true end
+    if typeof(a)~="table" or typeof(b)~="table" then return false end
+    for k,v in a do if not same(v,b[k]) then return false end end
+    for k in b do if a[k]==nil then return false end end
+    return true
+end
+Store.onChanged(function()
+    local state=Store.get()
+    local changed=lastInventoryState==nil
+    if lastInventoryState then
+        for _,field in inventoryFields do
+            if not same(state[field],lastInventoryState[field]) then changed=true;break end
+        end
+    end
+    local masteryChanged=not lastInventoryState or not same(state.rockMastery,lastInventoryState.rockMastery)
+    lastInventoryState=state
+    if changed then
+        pending=nil
+        favorites=table.clone(state.inventoryFavorites or {})
+        refresh()
+    elseif masteryChanged and root.Visible then updateDetails(false) end
+end)
+Remotes.ShopResult.OnClientEvent:Connect(function(_, ok, message)
+    if not ok and pending then pending = nil; updateDetails(false); details.Description.Text = message end
+end)
+
+local function resize(previewViewport)
+    local camera = workspace.CurrentCamera
+    if not camera then return end
+    local viewport = previewViewport or camera.ViewportSize
+    portrait = viewport.X < 720 and viewport.Y > viewport.X
+    local width = portrait and 360 or 1150
+    local height = portrait and 740 or 700
+    root.Size = UDim2.fromOffset(width, height)
+    root.Position = UDim2.fromScale(.5, .5)
+    root.ResponsiveScale.Scale = portrait
+        and math.min((viewport.X-12)/width, (viewport.Y-90)/height, 1.1)
+        or math.min((viewport.X-40)/width, (viewport.Y-110)/height, 1.32)
+    main.Size = UDim2.fromOffset(width, height)
+    main.CyanEdge.Size = UDim2.fromOffset(width-14, height-14)
+    main.Body.Size = UDim2.fromOffset(width-26, height-26)
+    if portrait then
+        root.Title.Position = UDim2.fromOffset(10, 10)
+        root.Title.Size = UDim2.fromOffset(340, 69)
+        if root.Title:FindFirstChild("HeaderBottomEdge") then root.Title.HeaderBottomEdge.Size = UDim2.fromOffset(322, 3) end
+        if root.Title:FindFirstChild("HeaderBottomEdge") then root.Title.HeaderBottomEdge.Position = UDim2.fromOffset(9, 63) end
+        root.Title.InventoryIcon.Size = UDim2.fromOffset(50, 50)
+        root.Title.InventoryIcon.Position = UDim2.fromOffset(12, 8)
+        root.Title.Heading.Size = UDim2.fromOffset(221, 58)
+        root.Title.Heading.Position = UDim2.fromOffset(65, 6)
+        root.Title.Heading.TextSize = 29
+        root.Title.SivaFixedGlare.Size = root.Title.Size
+        closeButton.Position = UDim2.fromOffset(326, 40)
+        closeButton.Size = UDim2.fromOffset(38, 38)
+        if closeButton:IsA("TextButton") then closeButton.TextSize = 25 end
+        categories.Position = UDim2.fromOffset(12, 91)
+        categories.Size = UDim2.fromOffset(336, 43)
+        for i, name in {"ALL", "ROCKS", "PETS", "SPECIAL"} do
+            local button = categories[name]
+            button.Position = UDim2.fromOffset((i-1)*84, 1)
+            button.Size = UDim2.fromOffset(79, 40)
+            button.Text = ""
+            button.CategoryIcon.Position = UDim2.fromOffset(5, 9)
+            button.CategoryIcon.Size = UDim2.fromOffset(22, 22)
+            button.CategoryCaption.Position = UDim2.fromOffset(29, 0)
+            button.CategoryCaption.Size = UDim2.fromOffset(49, 40)
+            button.CategoryCaption.TextSize = 12
+        end
+        main.RarityFilter.Position = UDim2.fromOffset(12, 141)
+        main.RarityFilter.Size = UDim2.fromOffset(124, 40)
+        main.RarityFilter.TextSize = 14
+        main.RarityFilter.Caret.Size = UDim2.new(0, 21, 1, 0)
+        main.RarityFilter.Caret.TextSize = 15
+        menu.Position = UDim2.fromOffset(12, 184)
+        menu.Size = UDim2.fromOffset(156, 220)
+        main.RarityFilter.SortCaption.TextSize = 12
+        for _, item in menu:GetChildren() do
+            if item:IsA("TextButton") then item.Size = UDim2.fromOffset(140, 34); item.TextSize = 13 end
+        end
+        main.SearchField.Position = UDim2.fromOffset(143, 141)
+        main.SearchField.Size = UDim2.fromOffset(205, 40)
+        main.SearchField.SearchRing.Position = UDim2.fromOffset(9, 10)
+        main.SearchField.SearchRing.Size = UDim2.fromOffset(15, 15)
+        main.SearchField.SearchHandle.Position = UDim2.fromOffset(21, 24)
+        main.SearchField.SearchHandle.Size = UDim2.fromOffset(11, 3)
+        main.SearchField.Input.Position = UDim2.fromOffset(37, 1)
+        main.SearchField.Input.Size = UDim2.new(1, -43, 1, -2)
+        main.SearchField.Input.TextSize = 14
+        grid.Position = UDim2.fromOffset(12, 190)
+        grid.Size = UDim2.fromOffset(336, 282)
+        main.Count.Position = UDim2.fromOffset(15, 475)
+        main.Count.TextSize = 13
+        details.Position = UDim2.fromOffset(12, 506)
+        details.Size = UDim2.fromOffset(336, 219)
+        details.PreviewBox.Position = UDim2.fromOffset(8, 8)
+        details.PreviewBox.Size = UDim2.fromOffset(139, 202)
+        details.PreviewBox.DisplayFloor.Position = UDim2.fromOffset(7, 164)
+        details.PreviewBox.DisplayFloor.Size = UDim2.fromOffset(125, 30)
+        details.PreviewBox.ItemShadow.Position = UDim2.fromOffset(30, 169)
+        details.PreviewBox.ItemShadow.Size = UDim2.fromOffset(79, 15)
+        details.NameBand.Visible = false
+        details.InfoPanel.Position = UDim2.fromOffset(151, 67)
+        details.InfoPanel.Size = UDim2.fromOffset(177, 92)
+        details.PreviewBox.Sunrays.Position = UDim2.fromOffset(-31, 8)
+        details.PreviewBox.Sunrays.Size = UDim2.fromOffset(200, 200)
+        details.PreviewBox.Art.Position = UDim2.fromOffset(0, 12)
+        details.PreviewBox.Art.Size = UDim2.fromOffset(139, 166)
+        details.PreviewBox.Icon.Position = details.PreviewBox.Art.Position
+        details.PreviewBox.Icon.Size = details.PreviewBox.Art.Size
+        details.ItemName.Position = UDim2.fromOffset(154, 8)
+        details.ItemName.Size = UDim2.fromOffset(170, 31)
+        details.ItemName.TextSize = 21
+        details.RarityChip.Position = UDim2.fromOffset(170, 43)
+        details.RarityChip.Size = UDim2.fromOffset(140, 24)
+        details.RarityChip.Label.Size = UDim2.fromOffset(136, 24)
+        details.RarityChip.Label.TextSize = 14
+        details.Description.Position = UDim2.fromOffset(153, 70)
+        details.Description.Size = UDim2.fromOffset(170, 55)
+        details.Description.TextSize = 13
+        details.Stats.Position = UDim2.fromOffset(153, 128)
+        details.Stats.Size = UDim2.fromOffset(170, 30)
+        details.Stats.TextSize = 11
+        details.Equip.Position = UDim2.fromOffset(153, 165)
+        details.Equip.Size = UDim2.fromOffset(170, 31)
+        details.Equip.TextSize = 17
+        details.Favorite.Position = UDim2.fromOffset(153, 199)
+        details.Favorite.Size = UDim2.fromOffset(170, 17)
+        details.Favorite.TextSize = 13
+        details.Favorite.Star.Position = UDim2.new(.5, -34, .5, 0)
+        details.Favorite.Star.Size = UDim2.fromOffset(17, 17)
+        details.Favorite.Star.TextSize = 15
+        details.Favorite.Caption.Position = UDim2.new(.5, -30, 0, 0)
+        details.Favorite.Caption.Size = UDim2.new(.5, 22, 1, 0)
+        details.Favorite.Caption.TextSize = 13
+        columns = 3
+        layout.CellSize = UDim2.fromOffset(96, 132)
+        layout.CellPadding = UDim2.fromOffset(8, 8)
+    else
+        root.Title.Position = UDim2.fromOffset(15, 12)
+        root.Title.Size = UDim2.fromOffset(1120, 93)
+        if root.Title:FindFirstChild("HeaderBottomEdge") then root.Title.HeaderBottomEdge.Size = UDim2.fromOffset(1102, 3) end
+        if root.Title:FindFirstChild("HeaderBottomEdge") then root.Title.HeaderBottomEdge.Position = UDim2.fromOffset(9, 87) end
+        root.Title.InventoryIcon.Size = UDim2.fromOffset(82, 76)
+        root.Title.InventoryIcon.Position = UDim2.fromOffset(27, 7)
+        root.Title.Heading.Size = UDim2.fromOffset(520, 73)
+        root.Title.Heading.Position = UDim2.fromOffset(121, 9)
+        root.Title.Heading.TextSize = 54
+        root.Title.SivaFixedGlare.Size = root.Title.Size
+        closeButton.Position = UDim2.fromOffset(1096, 57)
+        closeButton.Size = UDim2.fromOffset(66, 61)
+        if closeButton:IsA("TextButton") then closeButton.TextSize = 37 end
+        categories.Position = UDim2.fromOffset(21, 121)
+        categories.Size = UDim2.fromOffset(748, 59)
+        for i, name in {"ALL", "ROCKS", "PETS", "SPECIAL"} do
+            local button = categories[name]
+            button.Position = UDim2.fromOffset((i-1)*140, 3)
+            button.Size = UDim2.fromOffset(131, 52)
+            button.Text = ""
+            button.CategoryIcon.Position = UDim2.fromOffset(12, 10)
+            button.CategoryIcon.Size = UDim2.fromOffset(32, 32)
+            button.CategoryCaption.Position = UDim2.fromOffset(49, 0)
+            button.CategoryCaption.Size = UDim2.fromOffset(77, 52)
+            button.CategoryCaption.TextSize = 20
+        end
+        main.RarityFilter.Position = UDim2.fromOffset(586, 124)
+        main.RarityFilter.Size = UDim2.fromOffset(177, 52)
+        main.RarityFilter.TextSize = 18
+        main.RarityFilter.Caret.Size = UDim2.new(0, 25, 1, 0)
+        main.RarityFilter.Caret.TextSize = 20
+        menu.Position = UDim2.fromOffset(586, 182)
+        menu.Size = UDim2.fromOffset(177, 220)
+        main.RarityFilter.SortCaption.TextSize = 17
+        for _, item in menu:GetChildren() do
+            if item:IsA("TextButton") then item.Size = UDim2.fromOffset(161, 34); item.TextSize = 15 end
+        end
+        main.SearchField.Position = UDim2.fromOffset(781, 124)
+        main.SearchField.Size = UDim2.fromOffset(346, 52)
+        main.SearchField.SearchRing.Position = UDim2.fromOffset(14, 13)
+        main.SearchField.SearchRing.Size = UDim2.fromOffset(20, 20)
+        main.SearchField.SearchHandle.Position = UDim2.fromOffset(30, 32)
+        main.SearchField.SearchHandle.Size = UDim2.fromOffset(15, 4)
+        main.SearchField.Input.Position = UDim2.fromOffset(48, 2)
+        main.SearchField.Input.Size = UDim2.new(1, -58, 1, -4)
+        main.SearchField.Input.TextSize = 19
+        grid.Position = UDim2.fromOffset(18, 190)
+        grid.Size = UDim2.fromOffset(716, 483)
+        main.Count.Position = UDim2.fromOffset(21, 672)
+        main.Count.TextSize = 15
+        details.Position = UDim2.fromOffset(752, 190)
+        details.Size = UDim2.fromOffset(380, 483)
+        details.PreviewBox.Position = UDim2.fromOffset(11, 11)
+        details.PreviewBox.Size = UDim2.fromOffset(358, 211)
+        details.PreviewBox.DisplayFloor.Position = UDim2.fromOffset(15, 160)
+        details.PreviewBox.DisplayFloor.Size = UDim2.fromOffset(328, 45)
+        details.PreviewBox.ItemShadow.Position = UDim2.fromOffset(70, 166)
+        details.PreviewBox.ItemShadow.Size = UDim2.fromOffset(218, 28)
+        details.NameBand.Visible = true
+        details.NameBand.Position = UDim2.fromOffset(1, 222)
+        details.NameBand.Size = UDim2.fromOffset(378, 73)
+        details.InfoPanel.Position = UDim2.fromOffset(12, 299)
+        details.InfoPanel.Size = UDim2.fromOffset(356, 98)
+        details.PreviewBox.Sunrays.Position = UDim2.fromOffset(59, -25)
+        details.PreviewBox.Sunrays.Size = UDim2.fromOffset(240, 240)
+        details.PreviewBox.Art.Position = UDim2.fromOffset(27, -4)
+        details.PreviewBox.Art.Size = UDim2.fromOffset(304, 207)
+        details.PreviewBox.Icon.Position = details.PreviewBox.Art.Position
+        details.PreviewBox.Icon.Size = details.PreviewBox.Art.Size
+        details.ItemName.Position = UDim2.fromOffset(15, 225)
+        details.ItemName.Size = UDim2.fromOffset(350, 36)
+        details.ItemName.TextSize = 27
+        details.RarityChip.Position = UDim2.fromOffset(117, 264)
+        details.RarityChip.Size = UDim2.fromOffset(146, 27)
+        details.RarityChip.Label.Size = UDim2.fromOffset(142, 26)
+        details.RarityChip.Label.TextSize = 17
+        details.Description.Position = UDim2.fromOffset(20, 306)
+        details.Description.Size = UDim2.fromOffset(340, 41)
+        details.Description.TextSize = 16
+        details.Stats.Position = UDim2.fromOffset(20, 350)
+        details.Stats.Size = UDim2.fromOffset(340, 43)
+        details.Stats.TextSize = 13
+        details.Equip.Position = UDim2.fromOffset(17, 403)
+        details.Equip.Size = UDim2.fromOffset(346, 43)
+        details.Equip.TextSize = 23
+        details.Favorite.Position = UDim2.fromOffset(17, 450)
+        details.Favorite.Size = UDim2.fromOffset(346, 29)
+        details.Favorite.TextSize = 18
+        details.Favorite.Star.Position = UDim2.new(.5, -48, .5, 0)
+        details.Favorite.Star.Size = UDim2.fromOffset(27, 25)
+        details.Favorite.Star.TextSize = 22
+        details.Favorite.Caption.Position = UDim2.new(.5, -42, 0, 0)
+        details.Favorite.Caption.Size = UDim2.new(.5, 25, 1, 0)
+        details.Favorite.Caption.TextSize = 18
+        columns = 5
+        layout.CellSize = UDim2.fromOffset(130, 150)
+        layout.CellPadding = UDim2.fromOffset(10, 10)
+    end
+    layout.FillDirectionMaxCells = columns
+    refresh()
+end
+workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(function() resize() end)
+root:GetAttributeChangedSignal("InventoryPreviewViewport"):Connect(function()
+ local v=root:GetAttribute("InventoryPreviewViewport")
+ resize(typeof(v)=="Vector2" and v or nil)
+end)
+
+local transition = 0
+local closing = false
+local function close()
+    transition += 1
+    local token = transition
+    closing = true
+    menu.Visible = false
+    tw(root.PanelScale, {Scale=.82}, .16)
+    task.delay(.17, function()
+        if transition == token then root.Visible = false; root.PanelScale.Scale = 1; closing = false end
+    end)
+end
+local function open()
+    transition += 1
+    closing = false
+    root.Visible = true
+    root.PanelScale.Scale = .82
+    tw(root.PanelScale, {Scale=1}, .23, Enum.EasingStyle.Back)
+    resize()
+end
+root.Toggle.Event:Connect(function() if root.Visible and not closing then close() else open() end end)
+if closeButton then closeButton.Activated:Connect(close) end
+UIS.InputBegan:Connect(function(input, processed)
+    if not processed and root.Visible and input.KeyCode == Enum.KeyCode.Escape then close() end
+end)
+local hiddenHotbars = {}
+local function syncHotbars()
+    for _, gui in player.PlayerGui:GetChildren() do
+        if gui.Name == "HotbarGui" and gui:IsA("ScreenGui") then
+            if root.Visible then
+                if hiddenHotbars[gui] == nil then hiddenHotbars[gui] = gui.Enabled end
+                gui.Enabled = false
+            elseif hiddenHotbars[gui] ~= nil then
+                gui.Enabled = hiddenHotbars[gui]
+                hiddenHotbars[gui] = nil
+            end
+        end
+    end
+end
+root:GetPropertyChangedSignal("Visible"):Connect(function()
+    if root.Visible and inventoryDirty then refresh() end
+    syncHotbars()
+end)
+player.PlayerGui.ChildAdded:Connect(function(gui)
+    if gui.Name == "HotbarGui" then task.defer(syncHotbars) end
+end)
+local friendHud = root.Parent:FindFirstChild("FriendBoostHUD")
+local friendWasVisible
+local function syncFriendHud()
+    if not friendHud then return end
+    if root.Visible then
+        if friendWasVisible == nil then friendWasVisible = friendHud.Visible end
+        friendHud.Visible = false
+    elseif friendWasVisible ~= nil then
+        friendHud.Visible = friendWasVisible
+        friendWasVisible = nil
+    end
+end
+root:GetPropertyChangedSignal("Visible"):Connect(syncFriendHud)
+if friendHud then
+    friendHud:GetPropertyChangedSignal("Visible"):Connect(function()
+        if root.Visible and friendHud.Visible then friendHud.Visible = false end
+    end)
+end
+resize()
+refresh()
+syncHotbars()
+syncFriendHud()
+
+
+

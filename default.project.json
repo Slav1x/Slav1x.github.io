@@ -1,44 +1,74 @@
 {
-  "name": "Game",
+  "name": "Skip a Pebble!",
   "tree": {
     "$className": "DataModel",
-
-    "ReplicatedFirst": {
-      "$path": "src/ReplicatedFirst",
-      "$ignoreUnknownInstances": true
-    },
     "ReplicatedStorage": {
-      "$path": "src/ReplicatedStorage",
+      "$className": "ReplicatedStorage",
+      "Modules": {
+        "$properties": {
+          "IconTint": {
+            "Color3": [
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        },
+        "$ignoreUnknownInstances": true,
+        "$path": "src/ReplicatedStorage/Modules"
+      },
+      "Shared": {
+        "$properties": {
+          "IconTint": {
+            "Color3": [
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        },
+        "$ignoreUnknownInstances": true,
+        "$path": "src/ReplicatedStorage/Shared"
+      },
+      "SharedUI": {
+        "$properties": {
+          "IconTint": {
+            "Color3": [
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        },
+        "$ignoreUnknownInstances": true,
+        "$path": "src/ReplicatedStorage/SharedUI"
+      },
+      "$attributes": {
+        "Emitter2D_Version": 1.26
+      },
       "$ignoreUnknownInstances": true
     },
     "ServerScriptService": {
-      "$path": "src/ServerScriptService",
-      "$ignoreUnknownInstances": true
-    },
-    "ServerStorage": {
-      "$path": "src/ServerStorage",
-      "$ignoreUnknownInstances": true
-    },
-    "StarterGui": {
-      "$path": "src/StarterGui",
-      "$ignoreUnknownInstances": true
-    },
-    "StarterPack": {
-      "$path": "src/StarterPack",
-      "$ignoreUnknownInstances": true
+      "$ignoreUnknownInstances": true,
+      "$path": "src/ServerScriptService"
     },
     "StarterPlayer": {
       "$className": "StarterPlayer",
-      "$ignoreUnknownInstances": true,
-
-      "StarterPlayerScripts": {
-        "$path": "src/StarterPlayer/StarterPlayerScripts",
-        "$ignoreUnknownInstances": true
-      },
       "StarterCharacterScripts": {
-        "$path": "src/StarterPlayer/StarterCharacterScripts",
-        "$ignoreUnknownInstances": true
-      }
+        "$ignoreUnknownInstances": true,
+        "$path": "src/StarterPlayer/StarterCharacterScripts"
+      },
+      "StarterPlayerScripts": {
+        "$ignoreUnknownInstances": true,
+        "$path": "src/StarterPlayer/StarterPlayerScripts"
+      },
+      "$properties": {
+        "AvatarJointUpgrade": "Enabled",
+        "CameraMaxZoomDistance": 128.0,
+        "CharacterBreakJointsOnDeath": false,
+        "CharacterUseJumpPower": false
+      },
+      "$ignoreUnknownInstances": true
     }
   }
 }
