@@ -77,6 +77,8 @@ Run.Heartbeat:Connect(function(dt)
 end)
 ---------------------------------------------------------------- the true rebirth
 local function send(s,action,value) event:FireServer(action,s.token,value) end
+-- Every stage announces itself in Output, so a failure always says where it happened.
+local function stage(s,name) s.stage=name;print("[Golden] "..name) end
 local function await(s,kind,timeout)
  s.D:waitUntil(function() return s.inbox[kind]~=nil end,timeout)
  local data=s.inbox[kind]
@@ -103,9 +105,11 @@ local function run(s)
   send=function(action,value) send(s,action,value) end,
   await=function(kind,timeout) return await(s,kind,timeout) end}
  ---------------------------------------------------------------- 1. the Golden Rock
+ stage(s,"1/6 golden rock cutscene")
  local engulf=RockCinematic.play(ctx,s.mode)
  if not D.alive then return end
  ---------------------------------------------------------------- 2. the realm is built inside the light
+ stage(s,"2/6 building the spirit realm")
  local realm=SpiritRealm.build(D,s.basis,audio)
  local godPos=realm:point(Golden.Realm.God)
  local spawnPoint=realm:point(Vector3.zero)
@@ -114,6 +118,7 @@ local function run(s)
  D:every(function(dt) god:update(dt) end)
  ctx.realm=realm;ctx.god=god
  ---------------------------------------------------------------- 3. crossing over
+ stage(s,"3/6 crossing into the realm")
  ctx.send("EnterRealm")
  if not ctx.await("Arrived",10) then D:abort("the way did not open");return end
  local character=player.Character
@@ -135,6 +140,7 @@ local function run(s)
  D:animate(5.6,function(a) D:shoot(reveal0:Lerp(reveal1,D.inOut(a)),50) end)
  if not D.alive then return end
  ---------------------------------------------------------------- 4. the player walks to him
+ stage(s,"4/6 walking to the Pebble God")
  ctx.send("Walk")
  D:spawn(function() D:bars(0,1.4) end)
  D:freeCamera();D:lockControls(false);D:setPrompts(true)
@@ -164,6 +170,7 @@ local function run(s)
  listen:Destroy()
  if not D.alive then return end
  ---------------------------------------------------------------- 5. he speaks
+ stage(s,"5/6 the Pebble God speaks")
  D:lockControls(true);D:setPrompts(false)
  local function talkShot()
   local stand=root.Position
@@ -231,6 +238,7 @@ local function run(s)
  end
  dlg:close()
  ---------------------------------------------------------------- 6. sent onward
+ stage(s,"6/6 sent onward")
  if not Ending.sendOff(ctx) then return end
  local card=Ending.card(ctx)
  s.card=card
@@ -270,9 +278,9 @@ local function land(s)
   send(s,"Landed")
   task.wait(.3)
  end
- local reason=s.returnReason
+ local reason=s.failure and ("The golden sequence stopped at "..s.failure) or s.returnReason
  if type(reason)=="string" and #reason>12 then
-  pcall(function() StarterGui:SetCore("SendNotification",{Title="The Magical Rock",Text=reason,Duration=5}) end)
+  pcall(function() StarterGui:SetCore("SendNotification",{Title="The Magical Rock",Text=reason,Duration=12}) end)
  end
  card:dismiss(1.2)
  if session==s then session=nil end
@@ -289,9 +297,24 @@ local function startSession(data)
  rock:setQuiet(true)
  D:add(function() rock:setQuiet(false) end)
  task.spawn(function()
-  local ok,err=pcall(run,s)
-  if not ok then warn("[Golden] "..tostring(err)) end
-  land(s)
+  local ok,err=xpcall(run,debug.traceback,s)
+  if not ok then
+   warn("[Golden] stopped during '"..tostring(s.stage).."': "..tostring(err))
+   s.failure=tostring(s.stage)..": "..string.sub(tostring(err),1,160)
+  elseif not D.alive and D.reason and D.reason~="returned" then
+   warn("[Golden] ended during '"..tostring(s.stage).."': "..tostring(D.reason))
+  end
+  local landed,landError=xpcall(land,debug.traceback,s)
+  if not landed then
+   warn("[Golden] landing failed: "..tostring(landError))
+   -- Never leave the screen covered: remove any landing card and release the scene.
+   pcall(function() D:close() end)
+   local card=player.PlayerGui:FindFirstChild("GoldenLanding")
+   if card then card:Destroy() end
+   if session==s then session=nil end
+   pcall(function() send(s,"Landed") end)
+   pcall(refresh)
+  end
  end)
 end
 event.OnClientEvent:Connect(function(action,data)
