@@ -8,6 +8,7 @@ local Prompts=game:GetService("ProximityPromptService")
 local Audio=require(script.Parent.AwakeningAudio)
 local Pose=require(script.Parent.AwakeningPose)
 local Meridians=require(script.Parent.AwakeningMeridians)
+local VFX=require(script.Parent.AwakeningVFX)
 local Config=require(RS.Shared.AwakeningConfig)
 local player=Players.LocalPlayer
 local event=RS:WaitForChild("AwakeningEvent")
@@ -29,23 +30,22 @@ function C.begin(packet,onFinished)
  local gui=make("ScreenGui",player.PlayerGui,{Name="AwakeningCinema",IgnoreGuiInset=true,ScreenInsets=Enum.ScreenInsets.None,ClipToDeviceSafeArea=false,ResetOnSpawn=false,DisplayOrder=1000,ZIndexBehavior=Enum.ZIndexBehavior.Sibling})
  local folder=make("Folder",workspace,{Name="AwakeningLocalFX"})
  local blocker=make("TextButton",gui,{Name="InputShield",Size=UDim2.fromScale(1,1),BackgroundTransparency=1,Text="",Modal=true,Active=true,Selectable=false,ZIndex=1})
- local top=make("Frame",gui,{Name="LetterboxTop",Size=UDim2.fromScale(1,.105),BackgroundColor3=Color3.fromRGB(2,5,11),BorderSizePixel=0,ZIndex=15})
- local bottom=make("Frame",gui,{Name="LetterboxBottom",Position=UDim2.fromScale(0,.895),Size=UDim2.fromScale(1,.105),BackgroundColor3=Color3.fromRGB(2,5,11),BorderSizePixel=0,ZIndex=15})
- local subtitle=make("TextLabel",gui,{Name="Whisper",Position=UDim2.fromScale(.1,.9),Size=UDim2.fromScale(.8,.075),Text="",TextScaled=true,TextColor3=Config.Ice,BackgroundTransparency=1,Font=Enum.Font.GothamMedium,ZIndex=16})
+ local top=make("Frame",gui,{Name="LetterboxTop",Size=UDim2.fromScale(1,0),BackgroundColor3=Color3.fromRGB(2,5,11),BorderSizePixel=0,ZIndex=15})
+ local bottom=make("Frame",gui,{Name="LetterboxBottom",AnchorPoint=Vector2.new(0,1),Position=UDim2.fromScale(0,1),Size=UDim2.fromScale(1,0),BackgroundColor3=Color3.fromRGB(2,5,11),BorderSizePixel=0,ZIndex=15})
+ -- Hairline of light along the inner edge of each bar.
+ for _,bar in {top,bottom} do
+  local edge=make("Frame",bar,{Name="Edge",AnchorPoint=Vector2.new(0,bar==top and 0 or 1),Position=UDim2.fromScale(0,bar==top and 1 or 0),Size=UDim2.new(1,0,0,1),BorderSizePixel=0,BackgroundColor3=Config.Blue,BackgroundTransparency=.55,ZIndex=15})
+  make("UIGradient",edge,{Transparency=VFX.seq(0,1,.5,0,1,1)})
+ end
+ local subtitle=make("TextLabel",gui,{Name="Whisper",Position=UDim2.fromScale(.1,.9),Size=UDim2.fromScale(.8,.075),Text="",TextScaled=true,TextColor3=Config.Ice,TextStrokeColor3=Config.Blue,TextStrokeTransparency=.82,TextTransparency=1,BackgroundTransparency=1,Font=Enum.Font.GothamMedium,ZIndex=16})
  make("UITextSizeConstraint",subtitle,{MaxTextSize=18,MinTextSize=10})
  local skip=make("TextButton",gui,{Name="Skip",AnchorPoint=Vector2.new(1,0),Position=UDim2.new(.97,0,.025,0),Size=UDim2.fromOffset(150,44),BackgroundTransparency=1,Text=game:GetService("UserInputService").TouchEnabled and "Skip" or "Skip · Space / B",TextColor3=Color3.fromRGB(162,185,205),TextSize=13,Font=Enum.Font.GothamMedium,ZIndex=22,Visible=false})
  local fade=make("Frame",gui,{Name="Fade",Size=UDim2.fromScale(1,1),BackgroundColor3=Color3.fromRGB(2,6,15),BorderSizePixel=0,BackgroundTransparency=0,ZIndex=20})
  local flash=make("Frame",gui,{Name="BlueImpact",Size=UDim2.fromScale(1,1),BackgroundColor3=Config.Ice,BorderSizePixel=0,BackgroundTransparency=1,ZIndex=19})
  local tint=make("ColorCorrectionEffect",Lighting,{Name="AwakeningColor",TintColor=Color3.new(1,1,1),Saturation=0,Contrast=0,Brightness=0})
  local bloom=make("BloomEffect",Lighting,{Name="AwakeningBloom",Intensity=.15,Size=26,Threshold=1.1})
- local glow=make("PointLight",anchor,{Name="AwakeningContactLight",Color=Config.Blue,Range=14,Brightness=0})
- local aura=make("Attachment",root,{Name="AwakeningAura"})
- local heart=make("Attachment",root,{Name="AwakeningHeart",Position=Vector3.new(0,.65,-.45)})
- local palm=rock:FindFirstChild("PalmContact") or anchor
- local origin=make("Attachment",palm,{Name="AwakeningTransferOrigin"})
- local transfer=make("Beam",origin,{Name="PowerTransfer",Attachment0=origin,Attachment1=heart,FaceCamera=true,Color=ColorSequence.new(Config.Ice,Config.Blue),LightEmission=1,Width0=.16,Width1=.055,Segments=12,CurveSize0=.7,CurveSize1=-.3,Enabled=false})
- local transferGlow=make("Beam",origin,{Name="PowerTransferGlow",Attachment0=origin,Attachment1=heart,FaceCamera=true,Color=ColorSequence.new(Config.Blue),LightEmission=1,Width0=.4,Width1=.18,Segments=12,CurveSize0=.7,CurveSize1=-.3,Transparency=NumberSequence.new(.7),Enabled=false})
- local particles=make("ParticleEmitter",aura,{Name="Afterglow",Texture="rbxasset://textures/particles/sparkles_main.dds",Rate=0,Lifetime=NumberRange.new(.8,1.6),Speed=NumberRange.new(.4,2),Drag=1,SpreadAngle=Vector2.new(180,180),LightEmission=1,Color=ColorSequence.new(Config.Blue,Config.Ice),Size=NumberSequence.new({NumberSequenceKeypoint.new(0,.08),NumberSequenceKeypoint.new(.3,.17),NumberSequenceKeypoint.new(1,0)})})
+ local palm=rock:FindFirstChild("PalmContact")
+ if not (palm and palm:IsA("BasePart")) then palm=anchor end
  local controls
  -- This game can use the new character controller without a legacy PlayerModule.
  -- Never wait for an optional control module while the screen is covered.
@@ -69,7 +69,7 @@ function C.begin(packet,onFinished)
  for _,g in player.PlayerGui:GetDescendants() do hide(g) end
  table.insert(self.connections,player.PlayerGui.DescendantAdded:Connect(hide))
  for _,p in char:GetDescendants() do if p:IsA("BasePart") then self.locals[p]=p.LocalTransparencyModifier end end
- local audio,pose,inner
+ local audio,pose,inner,fx
  local restoredCamera=false
  local function restoreCamera()
   if restoredCamera then return end;restoredCamera=true
@@ -109,7 +109,9 @@ function C.begin(packet,onFinished)
   if controlsWereEnabled and controls then controls:Enable() end
   player:SetAttribute("RebirthCutscene",false)
   player:SetAttribute("AwakeningPhase",nil)
-  for _,object in {gui,folder,tint,bloom,glow,aura,heart,origin} do object:Destroy() end
+  if fx then pcall(fx.destroy,fx) end
+  if inner then pcall(inner.destroy,inner) end
+  for _,object in {gui,folder,tint,bloom} do object:Destroy() end
   if sendCancel then event:FireServer("Cancel",self.token) else event:FireServer("Finish",self.token) end
   onFinished(reason)
  end
@@ -128,7 +130,8 @@ function C.begin(packet,onFinished)
   audio=Audio.begin()
   local contact=rock:FindFirstChild("PalmContact")
   pose=Pose.begin(char,folder,contact and contact.CFrame or anchor.CFrame)
-  inner=Meridians.create(gui,char,packet.count)
+  fx=VFX.create({gui=gui,folder=folder,character=char,root=root,rock=rock,anchor=anchor,palm=palm,reduced=function() return player:GetAttribute("ReducedMotion")==true end})
+  inner=Meridians.create(gui,folder,char,packet.count)
  end,debug.traceback)
  if not ok then warn("[Awakening] setup",err);self:destroy("The scene could not load. Please try again.",true);return end
  local basis=root.CFrame
@@ -143,13 +146,17 @@ function C.begin(packet,onFinished)
  local seen={}
  local impactAt=-math.huge
  local function cue(name,at,t)
-  if t>=at and not seen[name] then seen[name]=true;audio:cue(name);if name=="transfer" then impactAt=t end end
+  if t>=at and not seen[name] then seen[name]=true;audio:cue(name);fx:cue(name,t);if name=="transfer" then impactAt=t end end
  end
+ local NIGHT=Color3.fromRGB(2,6,15)
+ local DEEP=Color3.fromRGB(6,22,52)
+ local RELEASE=Color3.fromRGB(214,240,255)
+ local lastLine,lineAt="",0
  function self:play(at) if self.alive and not self.started then self.started=at end end
  function self:complete(data)
   if not self.alive or self.committed then return end
   self.committed=true;self.completedAt=workspace:GetServerTimeNow();self.skipped=data.skipped
-  audio:cue("activate");particles:Emit(player:GetAttribute("ReducedMotion")==true and 8 or 22)
+  audio:cue("activate")
  end
  local connection
  connection=Run.RenderStepped:Connect(function()
@@ -164,20 +171,27 @@ function C.begin(packet,onFinished)
    gui:SetAttribute("SequenceTime",t)
    local cf=wide
    local fov=52
+   local focus=CFrame.new(point(0,.8,0))
    local phase="Establishing"
    local reach=smooth((t-1.65)/2.5)
    local eyes=smooth((t-3.9)/.6)
    local charge=smooth((t-6.55)/4.05)
    if not self.committed then charge=math.min(charge,.97) end
+   local inInner,out=false,nil
+   local line=""
+   fade.BackgroundColor3=NIGHT
    fade.BackgroundTransparency=smooth(t/.7)
    flash.BackgroundTransparency=1
    if since and (self.skipped or since>=1.1) then
-    local out=since-(self.skipped and 0 or 1.1)
+    out=since-(self.skipped and 0 or 1.1)
     phase="Returning"
     inner:hide()
+    if not seen.release then seen.release=true;fx:cue("return",t) end
     cf=returnShot:Lerp(medium,smooth(out/2.6))
     reach=1-smooth(out/1.3);eyes=1-smooth(out/.8)
-    subtitle.Text=self.skipped and "Your awakening is complete." or "Carry this light with you."
+    line=self.skipped and "Your awakening is complete." or "Carry this light with you."
+    -- Burst out of the body on a bright release, then settle into the world.
+    if out<.35 then fade.BackgroundColor3=(self.skipped or reduced) and NIGHT or RELEASE end
     fade.BackgroundTransparency=out<.35 and smooth(out/.35) or out<1.8 and 1 or 1-smooth((out-1.8)/.45)
     if out>=2.25 then
      restoreCamera();fade.BackgroundTransparency=smooth((out-2.25)/.65)
@@ -186,42 +200,54 @@ function C.begin(packet,onFinished)
     if not seen.fadeAudio then seen.fadeAudio=true;audio:finish(2.4) end
    elseif t>=6.35 then
     phase=self.committed and "Activated" or "InnerMeridians"
-    inner:update(t,charge,self.committed)
-    cf=dive;fov=43
-    subtitle.Text=self.committed and "The first light is yours." or "One quiet point. A greater possibility."
+    inInner=true
+    inner:update(t,charge,self.committed,reduced)
+    cf,focus=inner:camera(t,charge);fov=40
+    line=self.committed and "The first light is yours." or "One quiet point. A greater possibility."
+    fade.BackgroundColor3=DEEP
     fade.BackgroundTransparency=smooth((t-6.35)/.5)
     if since then
      flash.BackgroundTransparency=1-(reduced and .1 or .6)*(1-math.clamp(since/.38,0,1))
     end
    elseif t>=5.4 then
     phase="IntoTheBody";cf=chest:Lerp(dive,smooth((t-5.4)/1.05));fov=48
-    subtitle.Text="Breathe."
+    line="Breathe."
+    fade.BackgroundColor3=DEEP
     fade.BackgroundTransparency=1-smooth((t-6.02)/.33)
    elseif t>=2.1 then
     phase=t>=4.2 and "Contact" or "Reach";cf=medium:Lerp(contact,smooth((t-2.1)/2.3))
     fov=52-4*smooth((t-2.1)/2.3)
-    subtitle.Text=t>=4.2 and "The stone remembers." or "Let go of what was."
+    line=t>=4.2 and "The stone remembers." or "Let go of what was."
    else
-    cf=wide:Lerp(medium,smooth(t/2.1));subtitle.Text=player.DisplayName.."…"
+    cf=wide:Lerp(medium,smooth(t/2.1));line=player.DisplayName.."…"
    end
    if not since then
     cue("contact",4.15,t);cue("transfer",5.35,t);cue("inner",6.4,t)
     local hit=math.max(0,1-(t-impactAt)/.3)
-    flash.BackgroundTransparency=1-hit*(reduced and .08 or .48)
-    if not reduced and hit>0 then cf*=CFrame.new(math.sin(t*90)*.04*hit,math.cos(t*85)*.025*hit,0) end
+    flash.BackgroundTransparency=1-hit*(reduced and .08 or .5)
+    if not reduced and hit>0 then cf*=CFrame.new(math.sin(t*90)*.09*hit,math.cos(t*85)*.06*hit,0)*CFrame.Angles(0,0,math.sin(t*60)*.012*hit) end
    end
+   -- Subtitles ease in on every new line instead of snapping.
+   if line~=lastLine then lastLine=line;lineAt=t;subtitle.Text=line end
+   subtitle.TextTransparency=1-smooth((t-lineAt)/.45)
+   -- Letterbox bars glide in with the takeover and out as the world returns.
+   local bars=.105*smooth(t/.9)
+   if out then bars*=1-smooth((out-1.9)/.35) end
+   top.Size=UDim2.fromScale(1,bars);bottom.Size=UDim2.fromScale(1,bars)
+   -- Grading: cool and slightly desaturated in the world, rich and glowing inside the body.
+   local grade=(phase=="Returning" and math.max(0,1-(since or 0)/2.5) or smooth(t))
+   tint.TintColor=Color3.new(1,1,1):Lerp(Color3.fromRGB(185,217,255),grade*(inInner and .25 or .45))
+   tint.Saturation=inInner and .1 or -.25*grade;tint.Contrast=(inInner and .14 or .08)*grade;tint.Brightness=0
+   if inInner then bloom.Intensity=.45+charge*.6;bloom.Size=34;bloom.Threshold=.92
+   else bloom.Intensity=.18+charge*.22+(since and 0 or math.max(0,1-(t-impactAt)/.4)*.8);bloom.Size=26;bloom.Threshold=1.1 end
+   fx:update({t=t,cam=camera,phase=phase,reach=reach,charge=charge,inner=inInner,since=since,out=out,skipped=self.skipped,tint=tint})
    if not restoredCamera then
+    fov+=fx.fovOffset
     camera.CameraType=Enum.CameraType.Scriptable;camera.CFrame=cf;camera.FieldOfView=fov+(camera.ViewportSize.X<camera.ViewportSize.Y and 18 or 0)
-    camera.Focus=CFrame.new(point(0,.8,0))
+    camera.Focus=focus
    end
    for p in self.locals do if p.Parent and p.Name~="HumanoidRootPart" then p.LocalTransparencyModifier=0 end end
    pose:update(reach,eyes)
-   transfer.Enabled=t>=5.12 and t<6.35 and not self.skipped;transferGlow.Enabled=transfer.Enabled
-   if transfer.Enabled then transfer.Transparency=NumberSequence.new(.1+.5*math.clamp((t-5.6)/.75,0,1)) end
-   local grade=(phase=="Returning" and math.max(0,1-(since or 0)/2.5) or smooth(t))
-   tint.TintColor=Color3.new(1,1,1):Lerp(Color3.fromRGB(185,217,255),grade*.45)
-   tint.Saturation=-.25*grade;tint.Contrast=.08*grade
-   bloom.Intensity=.18+charge*.22;glow.Brightness=(.4+charge*1.6)*grade
    audio:update(phase=="InnerMeridians" and charge or 0,t)
    player:SetAttribute("AwakeningPhase",phase);gui:SetAttribute("Phase",phase)
   end,debug.traceback)
