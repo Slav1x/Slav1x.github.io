@@ -253,7 +253,7 @@ function God:walkTo(D,targetCF,seconds,steps)
  self.realm:ripple(targetCF.Position,36*S,3,Golden.WhiteGold,.4)
  return true
 end
-function God:parts()
+function God:allParts()
  local list={}
  for _,e in self.parts do table.insert(list,e.part) end
  for _,p in self.haloRing.parts do table.insert(list,p) end

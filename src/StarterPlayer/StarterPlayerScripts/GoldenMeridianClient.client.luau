@@ -114,7 +114,7 @@ local function run(s)
  local godPos=realm:point(Golden.Realm.God)
  local spawnPoint=realm:point(Vector3.zero)
  local god=PebbleGod.new(realm,CFrame.lookAt(godPos,spawnPoint))
- realm:reflect(god:parts())
+ realm:reflect(god:allParts())
  D:every(function(dt) god:update(dt) end)
  ctx.realm=realm;ctx.god=god
  ---------------------------------------------------------------- 3. crossing over
