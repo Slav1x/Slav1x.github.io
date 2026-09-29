@@ -109,6 +109,7 @@ local function serialise(player: Player, heldProfile: Profiles.Profile?): {[stri
 		totalThrows = profile.totalThrows,
 		totalMoney = profile.totalMoney,
 		quests = profile.quests,
+		goldenPath = require(script.Parent.GoldenMeridianState).serialise(profile),
 	}
 end
 
@@ -311,6 +312,7 @@ local function deserialise(data: {[string]: any}): Profiles.Profile
 		end
 	end
 	profile.tutorialSkipped = data.tutorialSkipped == true
+	require(script.Parent.GoldenMeridianState).deserialise(profile, data.goldenPath)
 
 	Cleanup.apply(profile)
 	if profile.rocksOwned[profile.rockEquipped] then

@@ -85,6 +85,9 @@ function V.create(o)
  local afterglow=make("ParticleEmitter",body,{Name="Afterglow",Texture=V.Sparkle,Rate=0,Shape=Enum.ParticleEmitterShape.Box,ShapeStyle=Enum.ParticleEmitterShapeStyle.Volume,
   Lifetime=NumberRange.new(.9,1.8),Speed=NumberRange.new(.4,2.2),Drag=1,SpreadAngle=Vector2.new(180,180),Acceleration=Vector3.new(0,.8,0),LightEmission=1,LightInfluence=0,
   Color=ColorSequence.new(Config.Blue,Config.Ice),Size=seq(0,.08,.3,.2,1,0),Transparency=seq(0,0,.7,.2,1,1)})
+ local goldMotes=make("ParticleEmitter",body,{Name="GoldenRemnant",Texture=V.Sparkle,Rate=0,Shape=Enum.ParticleEmitterShape.Box,ShapeStyle=Enum.ParticleEmitterShapeStyle.Volume,
+  Lifetime=NumberRange.new(1.6,2.6),Speed=NumberRange.new(.3,1.2),Drag=.8,SpreadAngle=Vector2.new(180,180),Acceleration=Vector3.new(0,.5,0),LightEmission=1,LightInfluence=0,
+  Color=ColorSequence.new(Color3.fromRGB(255,241,208),Color3.fromRGB(255,193,86)),Size=seq(0,.06,.3,.16,1,0),Transparency=seq(0,0,.8,.3,1,1)})
  local charGlow=make("Highlight",folder,{Name="AwakeningCharacterGlow",Adornee=o.character,FillColor=Config.Blue,OutlineColor=Config.Ice,FillTransparency=1,OutlineTransparency=1,DepthMode=Enum.HighlightDepthMode.Occluded})
  -- Ground sigil: two counter-rotating rings and eight marks around the player's feet.
  local params=RaycastParams.new();params.FilterType=Enum.RaycastFilterType.Exclude;params.FilterDescendantsInstances={o.character,folder,rock}
@@ -126,6 +129,8 @@ function V.create(o)
    self.impactAt=t;sparks:Emit(r and 10 or 30);flare:Emit(1)
   elseif name=="return" then
    self.returnAt=t;afterglow:Emit(r and 10 or 34);wisps:Emit(r and 4 or 14)
+   -- After the tenth awakening a few motes come back gold: something has changed.
+   if o.final then goldMotes:Emit(r and 4 or 12) end
   end
  end
  local function toScreen(cam,position)

@@ -11,6 +11,9 @@ P.StartingSpinStrength=10
 P.MaxSpinStrength=9e8
 P.MaxEffectiveStrength=1e12
 P.MaxRebirths=24
+-- Normal rebirths end at the tenth meridian; the Golden Meridian follows (GoldenMeridianService).
+-- Derived from the meridian map so the rebirth count and the cutscene always agree.
+P.NormalRebirths=#require(script.Parent.AwakeningConfig).Nodes
 P.MaxRebirthCost=9e12
 local Zones=require(script.Parent.ZoneConfig)
 P.MaxRebirthDistance=Zones.List[#Zones.List].finish
@@ -99,6 +102,10 @@ function P.canRebirth(profile: any,money: number): (boolean,string)
  if not profile or profile.loaded~=true then return false,"Your save is loading" end
  local r=rebirthCount(profile.rebirths)
  if r>=P.MaxRebirths then return false,"Maximum rebirth potential reached" end
+ if r>=P.NormalRebirths then
+  local golden=type(profile.goldenPath)=="table" and profile.goldenPath.unlocked==true
+  return false,golden and "The Golden Meridian has awakened" or "Ten paths awakened · return to the Magical Rock"
+ end
  local q=P.rebirthRequirements(r)
  if not profile.cycleCompletedAreas or profile.cycleCompletedAreas[q.areaId]~=true then return false,"Complete "..q.areaName.." this journey" end
  if (profile.spinStrength or 0)<q.strength then return false,"Reach "..P.formatStrength(q.strength).." Spin Strength" end

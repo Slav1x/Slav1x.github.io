@@ -77,6 +77,8 @@ export type Profile = {
 	tutorialSkipped: boolean,
 	freeSummonUsed: boolean,
 	redeemedCodes: {[string]: boolean},
+	-- Golden Meridian progress (GoldenMeridianState owns the shape).
+	goldenPath: {[string]: any}?,
 	loaded: boolean,
 }
 

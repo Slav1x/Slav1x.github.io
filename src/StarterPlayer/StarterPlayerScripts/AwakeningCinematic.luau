@@ -70,6 +70,18 @@ function C.begin(packet,onFinished)
  table.insert(self.connections,player.PlayerGui.DescendantAdded:Connect(hide))
  for _,p in char:GetDescendants() do if p:IsA("BasePart") then self.locals[p]=p.LocalTransparencyModifier end end
  local audio,pose,inner,fx
+ -- The tenth awakening completes the blue network and lingers on what comes after it.
+ local final=packet.count==Config.FinalAwakening
+ local returnAfter=final and Meridians.FinaleTimeline.finish or 1.1
+ local anomaly={}
+ local function anomalySound(name,id,speed,volume,looped)
+  local bus=game:GetService("SoundService"):FindFirstChild("AwakeningMix")
+  local s=Instance.new("Sound");s.Name=name;s:SetAttribute("AwakeningAudio",true)
+  s.SoundId=id;s.PlaybackSpeed=speed;s.Volume=volume;s.Looped=looped==true;s.SoundGroup=bus
+  local r=Instance.new("ReverbSoundEffect");r.DecayTime=3.2;r.WetLevel=-8;r.DryLevel=-2;r.Parent=s
+  s.Parent=game:GetService("SoundService");s:Play();table.insert(anomaly,s)
+  return s
+ end
  local restoredCamera=false
  local function restoreCamera()
   if restoredCamera then return end;restoredCamera=true
@@ -111,6 +123,7 @@ function C.begin(packet,onFinished)
   player:SetAttribute("AwakeningPhase",nil)
   if fx then pcall(fx.destroy,fx) end
   if inner then pcall(inner.destroy,inner) end
+  for _,s in anomaly do s:Destroy() end
   for _,object in {gui,folder,tint,bloom} do object:Destroy() end
   if sendCancel then event:FireServer("Cancel",self.token) else event:FireServer("Finish",self.token) end
   onFinished(reason)
@@ -130,7 +143,7 @@ function C.begin(packet,onFinished)
   audio=Audio.begin()
   local contact=rock:FindFirstChild("PalmContact")
   pose=Pose.begin(char,folder,contact and contact.CFrame or anchor.CFrame)
-  fx=VFX.create({gui=gui,folder=folder,character=char,root=root,rock=rock,anchor=anchor,palm=palm,reduced=function() return player:GetAttribute("ReducedMotion")==true end})
+  fx=VFX.create({gui=gui,folder=folder,character=char,root=root,rock=rock,anchor=anchor,palm=palm,final=final,reduced=function() return player:GetAttribute("ReducedMotion")==true end})
   inner=Meridians.create(gui,folder,char,packet.count)
  end,debug.traceback)
  if not ok then warn("[Awakening] setup",err);self:destroy("The scene could not load. Please try again.",true);return end
@@ -150,7 +163,7 @@ function C.begin(packet,onFinished)
  end
  local NIGHT=Color3.fromRGB(2,6,15)
  local DEEP=Color3.fromRGB(6,22,52)
- local RELEASE=Color3.fromRGB(214,240,255)
+ local RELEASE=final and Color3.fromRGB(255,244,222) or Color3.fromRGB(214,240,255)
  local lastLine,lineAt="",0
  function self:play(at) if self.alive and not self.started then self.started=at end end
  function self:complete(data)
@@ -182,14 +195,14 @@ function C.begin(packet,onFinished)
    fade.BackgroundColor3=NIGHT
    fade.BackgroundTransparency=smooth(t/.7)
    flash.BackgroundTransparency=1
-   if since and (self.skipped or since>=1.1) then
-    out=since-(self.skipped and 0 or 1.1)
+   if since and (self.skipped or since>=returnAfter) then
+    out=since-(self.skipped and 0 or returnAfter)
     phase="Returning"
     inner:hide()
     if not seen.release then seen.release=true;fx:cue("return",t) end
     cf=returnShot:Lerp(medium,smooth(out/2.6))
     reach=1-smooth(out/1.3);eyes=1-smooth(out/.8)
-    line=self.skipped and "Your awakening is complete." or "Carry this light with you."
+    line=self.skipped and "Your awakening is complete." or final and "Something is different." or "Carry this light with you."
     -- Burst out of the body on a bright release, then settle into the world.
     if out<.35 then fade.BackgroundColor3=(self.skipped or reduced) and NIGHT or RELEASE end
     fade.BackgroundTransparency=out<.35 and smooth(out/.35) or out<1.8 and 1 or 1-smooth((out-1.8)/.45)
@@ -198,12 +211,28 @@ function C.begin(packet,onFinished)
      if out>=2.9 then self:destroy();return end
     end
     if not seen.fadeAudio then seen.fadeAudio=true;audio:finish(2.4) end
+    if self.anomalyDrone then self.anomalyDrone.Volume*=.9 end
    elseif t>=6.35 then
     phase=self.committed and "Activated" or "InnerMeridians"
     inInner=true
     inner:update(t,charge,self.committed,reduced)
     cf,focus=inner:camera(t,charge);fov=40
-    line=self.committed and "The first light is yours." or "One quiet point. A greater possibility."
+    line=Config.innerLine(packet.count,self.committed)
+    if final and since then
+     -- Finale: the full network, a low tone no one has heard before, a spark of gold.
+     local fin=since-Meridians.FinaleTimeline.reveal
+     if fin>=.3 then line="Ten paths." end
+     if fin>=2.9 then line="…" end
+     if fin>=.9 and not seen.anomaly then
+      seen.anomaly=true
+      self.anomalyDrone=anomalySound("Awakening_Anomaly",Config.Audio.Ambient,.34,0,true)
+     end
+     if self.anomalyDrone then self.anomalyDrone.Volume=.3*smooth((fin-.9)/1.6)*(1-smooth((fin-3.9)/.5)) end
+     for i,at_ in Meridians.FinaleTimeline.pulses do
+      if since>=at_ and not seen["pulse"..i] then seen["pulse"..i]=true;anomalySound("Awakening_TenPulse",Config.Audio.Impact,.48+i*.05,.16+i*.03) end
+     end
+     if since>=Meridians.FinaleTimeline.spark and not seen.spark then seen.spark=true;anomalySound("Awakening_GoldenSpark",Config.Audio.Chime,.62,.2) end
+    end
     fade.BackgroundColor3=DEEP
     fade.BackgroundTransparency=smooth((t-6.35)/.5)
     if since then

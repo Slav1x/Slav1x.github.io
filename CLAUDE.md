@@ -33,6 +33,11 @@ is part of its working systems.
    replacements based on those references.
 7. **You cannot run Roblox Studio here.** Changes can't be play-tested in the cloud. Say what
    the user should test in Studio after syncing, and don't claim something works in-game.
+8. **Rebirths and the Golden Meridian.** Normal rebirths stop at `ProgressionConfig.NormalRebirths`,
+   which is derived from the ten meridians in `AwakeningConfig.Nodes`; keep the two in step.
+   Golden Meridian progress is saved in `profile.goldenPath` (shape owned by
+   `GoldenMeridianState`) and granted only by `GoldenMeridianService`. Treat it like DataStore
+   data (rule 5). Install and test notes: `docs/GOLDEN_MERIDIAN.md`.
 
 ## How files map to Roblox (Rojo 7)
 
