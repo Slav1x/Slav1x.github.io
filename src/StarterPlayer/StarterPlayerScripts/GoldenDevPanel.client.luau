@@ -4,19 +4,20 @@ local RunService=game:GetService("RunService")
 if not RunService:IsStudio() then return end
 local Players=game:GetService("Players")
 local RS=game:GetService("ReplicatedStorage")
-local remote=RS:WaitForChild("GoldenDevTools",15)
-if not remote then return end
+-- The panel always appears; if the server half is missing it says so instead of hiding.
+local remote=RS:FindFirstChild("GoldenDevTools")
+task.spawn(function() remote=remote or RS:WaitForChild("GoldenDevTools",60) end)
 local Cinematic=require(script.Parent.AwakeningCinematic)
 local AwakeningConfig=require(RS.Shared.AwakeningConfig)
 local player=Players.LocalPlayer
 local busy=false
 local gui=Instance.new("ScreenGui")
-gui.Name="GoldenDevPanel";gui.ResetOnSpawn=false;gui.DisplayOrder=900;gui.Parent=player.PlayerGui
+gui.Name="GoldenDevPanel";gui.ResetOnSpawn=false;gui.DisplayOrder=10000;gui.IgnoreGuiInset=true;gui.Parent=player.PlayerGui
 local toggle=Instance.new("TextButton")
-toggle.Size=UDim2.fromOffset(110,26);toggle.Position=UDim2.fromOffset(8,70);toggle.Text="GOLDEN DEV";toggle.Font=Enum.Font.GothamBold;toggle.TextSize=12
+toggle.AnchorPoint=Vector2.new(0,1);toggle.Size=UDim2.fromOffset(110,26);toggle.Position=UDim2.new(0,8,1,-8);toggle.Text="GOLDEN DEV";toggle.Font=Enum.Font.GothamBold;toggle.TextSize=12
 toggle.BackgroundColor3=Color3.fromRGB(40,30,14);toggle.TextColor3=Color3.fromRGB(255,210,120);toggle.Parent=gui
 local panel=Instance.new("Frame")
-panel.Size=UDim2.fromOffset(300,392);panel.Position=UDim2.fromOffset(8,100);panel.BackgroundColor3=Color3.fromRGB(18,16,14);panel.BackgroundTransparency=.08;panel.Visible=false;panel.Parent=gui
+panel.AnchorPoint=Vector2.new(0,1);panel.Size=UDim2.fromOffset(300,424);panel.Position=UDim2.new(0,8,1,-40);panel.BackgroundColor3=Color3.fromRGB(18,16,14);panel.BackgroundTransparency=.08;panel.Visible=false;panel.Parent=gui
 Instance.new("UICorner",panel).CornerRadius=UDim.new(0,8)
 local layout=Instance.new("UIListLayout");layout.Padding=UDim.new(0,4);layout.SortOrder=Enum.SortOrder.LayoutOrder;layout.Parent=panel
 local pad=Instance.new("UIPadding");pad.PaddingTop=UDim.new(0,8);pad.PaddingLeft=UDim.new(0,8);pad.PaddingRight=UDim.new(0,8);pad.Parent=panel
@@ -46,6 +47,10 @@ local function button(parent,text,width,fn)
  end)
 end
 local function call(action,value)
+ if not remote then
+  status.Text="✗ Server dev tools not found. Check ServerScriptService has the Script 'GoldenMeridian' (not inside 'Server') and 'Server' contains the ModuleScript 'GoldenDevTools'. Look for red errors in Output."
+  return false
+ end
  local ok,message=remote:InvokeServer(action,value)
  status.Text=(ok and "✓ " or "✗ ")..tostring(message or action)
  return ok
@@ -66,6 +71,10 @@ local function preview(n)
  call("unstance")
  status.Text="Previewed rebirth "..n
 end
+label("SETUP")
+local r0=row()
+button(r0,"Skip tutorial",140,function() call("skipTutorial") end)
+button(r0,"Show state",140,function() call("state") end)
 label("PREVIEW A REBIRTH CUTSCENE (no progress)")
 local r1,r2=row(),row()
 for n=1,#AwakeningConfig.Nodes do button(n<=5 and r1 or r2,tostring(n),52,function() preview(n) end) end
@@ -84,7 +93,6 @@ button(r5,"Start trial",140,function() if call("resetGolden",true) then task.wai
 button(r5,"Unfinished ending",140,function() if call("grantGolden",false) then task.wait(.5);call("beginGolden") end end)
 local r6=row()
 button(r6,"Memory visit",140,function() if call("grantGolden",true) then task.wait(.5);call("beginGolden") end end)
-button(r6,"Show state",140,function() call("state") end)
 local r7=row()
 button(r7,"Fast dialogue: off",284,function() end)
 local fastButton=r7:FindFirstChildOfClass("TextButton")

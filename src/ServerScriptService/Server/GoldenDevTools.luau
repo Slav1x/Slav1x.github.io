@@ -67,6 +67,14 @@ actions.beginGolden=function(player)
  task.wait(.2)
  return Golden.begin(player),"Begin requested"
 end
+-- Finish the beginner tutorial the same way its own Skip button does.
+actions.skipTutorial=function(player)
+ local profile=Profiles.get(player)
+ profile.tutorialSkipped=true
+ profile.tutorialStage="Completed"
+ Profiles.fireChanged(player)
+ return true,"Tutorial skipped"
+end
 actions.state=function(player)
  local profile=Profiles.get(player)
  local path=State.get(profile)
