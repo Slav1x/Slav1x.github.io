@@ -1,0 +1,74 @@
+{
+  "name": "Skip a Pebble!",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "$className": "ReplicatedStorage",
+      "Modules": {
+        "$properties": {
+          "IconTint": {
+            "Color3": [
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        },
+        "$ignoreUnknownInstances": true,
+        "$path": "src/ReplicatedStorage/Modules"
+      },
+      "Shared": {
+        "$properties": {
+          "IconTint": {
+            "Color3": [
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        },
+        "$ignoreUnknownInstances": true,
+        "$path": "src/ReplicatedStorage/Shared"
+      },
+      "SharedUI": {
+        "$properties": {
+          "IconTint": {
+            "Color3": [
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        },
+        "$ignoreUnknownInstances": true,
+        "$path": "src/ReplicatedStorage/SharedUI"
+      },
+      "$attributes": {
+        "Emitter2D_Version": 1.26
+      },
+      "$ignoreUnknownInstances": true
+    },
+    "ServerScriptService": {
+      "$ignoreUnknownInstances": true,
+      "$path": "src/ServerScriptService"
+    },
+    "StarterPlayer": {
+      "$className": "StarterPlayer",
+      "StarterCharacterScripts": {
+        "$ignoreUnknownInstances": true,
+        "$path": "src/StarterPlayer/StarterCharacterScripts"
+      },
+      "StarterPlayerScripts": {
+        "$ignoreUnknownInstances": true,
+        "$path": "src/StarterPlayer/StarterPlayerScripts"
+      },
+      "$properties": {
+        "AvatarJointUpgrade": "Enabled",
+        "CameraMaxZoomDistance": 128.0,
+        "CharacterBreakJointsOnDeath": false,
+        "CharacterUseJumpPower": false
+      },
+      "$ignoreUnknownInstances": true
+    }
+  }
+}

@@ -1,0 +1,233 @@
+[
+  {
+    "path": "StarterGui.HotbarGui.HotbarController",
+    "className": "LocalScript",
+    "file": "studio-only/snapshots/StarterGui/001-HotbarController.client.luau"
+  },
+  {
+    "path": "StarterGui.MainHUD.MainHUDScript",
+    "className": "LocalScript",
+    "file": "studio-only/snapshots/StarterGui/002-MainHUDScript.client.luau"
+  },
+  {
+    "path": "StarterGui.MainHUD.UIPolishKit",
+    "className": "ModuleScript",
+    "file": "studio-only/snapshots/StarterGui/003-UIPolishKit.luau"
+  },
+  {
+    "path": "StarterGui.MainHUD.NavigationController",
+    "className": "LocalScript",
+    "file": "studio-only/snapshots/StarterGui/004-NavigationController.client.luau"
+  },
+  {
+    "path": "StarterGui.MainHUD.SimulatorHudController",
+    "className": "LocalScript",
+    "file": "studio-only/snapshots/StarterGui/005-SimulatorHudController.client.luau"
+  },
+  {
+    "path": "StarterGui.MainHUD.QuestUIController",
+    "className": "LocalScript",
+    "file": "studio-only/snapshots/StarterGui/006-QuestUIController.client.luau"
+  },
+  {
+    "path": "StarterGui.MainHUD.UIFlairController",
+    "className": "LocalScript",
+    "file": "studio-only/snapshots/StarterGui/007-UIFlairController.client.luau"
+  },
+  {
+    "path": "StarterGui.MainHUD.ArcadeSettingsKit",
+    "className": "ModuleScript",
+    "file": "studio-only/snapshots/StarterGui/008-ArcadeSettingsKit.luau"
+  },
+  {
+    "path": "StarterGui.MainHUD.SpinMultiplierController",
+    "className": "LocalScript",
+    "file": "studio-only/snapshots/StarterGui/009-SpinMultiplierController.client.luau"
+  },
+  {
+    "path": "StarterGui.MainHUD.ThrowRewardBank",
+    "className": "LocalScript",
+    "file": "studio-only/snapshots/StarterGui/010-ThrowRewardBank.client.luau"
+  },
+  {
+    "path": "StarterGui.MainHUD.LeftNav.TileLayout",
+    "className": "LocalScript",
+    "file": "studio-only/snapshots/StarterGui/011-TileLayout.client.luau"
+  },
+  {
+    "path": "StarterGui.MainHUD.LeftNav.shop.shopscript",
+    "className": "LocalScript",
+    "file": "studio-only/snapshots/StarterGui/012-shopscript.client.luau"
+  },
+  {
+    "path": "StarterGui.MainHUD.LeftNav.shop.RainbowWave",
+    "className": "LocalScript",
+    "file": "studio-only/snapshots/StarterGui/013-RainbowWave.client.luau"
+  },
+  {
+    "path": "StarterGui.MainHUD.LeftNav.shop.ShopIconWiggle",
+    "className": "LocalScript",
+    "file": "studio-only/snapshots/StarterGui/014-ShopIconWiggle.client.luau"
+  },
+  {
+    "path": "StarterGui.MainHUD.LeftNav.Upgrades.shopscript",
+    "className": "LocalScript",
+    "file": "studio-only/snapshots/StarterGui/015-shopscript.client.luau"
+  },
+  {
+    "path": "StarterGui.MainHUD.LeftNav.Upgrades.NavIconWiggle",
+    "className": "LocalScript",
+    "file": "studio-only/snapshots/StarterGui/016-NavIconWiggle.client.luau"
+  },
+  {
+    "path": "StarterGui.MainHUD.LeftNav.inventory.inventoryscript",
+    "className": "LocalScript",
+    "file": "studio-only/snapshots/StarterGui/017-inventoryscript.client.luau"
+  },
+  {
+    "path": "StarterGui.MainHUD.LeftNav.inventory.NavIconWiggle",
+    "className": "LocalScript",
+    "file": "studio-only/snapshots/StarterGui/018-NavIconWiggle.client.luau"
+  },
+  {
+    "path": "StarterGui.MainHUD.LeftNav.Index.NavIconWiggle",
+    "className": "LocalScript",
+    "file": "studio-only/snapshots/StarterGui/019-NavIconWiggle.client.luau"
+  },
+  {
+    "path": "StarterGui.MainHUD.inventoryui.InventorySelectionScript",
+    "className": "LocalScript",
+    "file": "studio-only/snapshots/StarterGui/020-InventorySelectionScript.client.luau"
+  },
+  {
+    "path": "StarterGui.MainHUD.shopui.ShopController",
+    "className": "LocalScript",
+    "file": "studio-only/snapshots/StarterGui/021-ShopController.client.luau"
+  },
+  {
+    "path": "StarterGui.MainHUD.shopui.PetViewportController",
+    "className": "LocalScript",
+    "file": "studio-only/snapshots/StarterGui/022-PetViewportController.client.luau"
+  },
+  {
+    "path": "StarterGui.MainHUD.dailyrewardsopenFrame.dailyrewardsopenbutton.dailyrewardopenbuttonscript",
+    "className": "LocalScript",
+    "file": "studio-only/snapshots/StarterGui/023-dailyrewardopenbuttonscript.client.luau"
+  },
+  {
+    "path": "StarterGui.MainHUD.dailyrewardsopenFrame.dailyrewardsopenbutton.NavIconWiggle",
+    "className": "LocalScript",
+    "file": "studio-only/snapshots/StarterGui/024-NavIconWiggle.client.luau"
+  },
+  {
+    "path": "StarterGui.MainHUD.Inventory.Manager",
+    "className": "LocalScript",
+    "file": "studio-only/snapshots/StarterGui/025-Manager.client.luau"
+  },
+  {
+    "path": "StarterGui.MainHUD.Inventory.Manager.Toolbar.ToolSelectHandler",
+    "className": "Script",
+    "file": "studio-only/snapshots/StarterGui/026-ToolSelectHandler.server.luau"
+  },
+  {
+    "path": "StarterGui.MainHUD.Inventory.CoreTextureSystem",
+    "className": "Script",
+    "file": "studio-only/snapshots/StarterGui/027-CoreTextureSystem.server.luau"
+  },
+  {
+    "path": "StarterGui.MainHUD.Inventory.CoreTextureSystem.TextureConfiguration",
+    "className": "ModuleScript",
+    "file": "studio-only/snapshots/StarterGui/028-TextureConfiguration.luau"
+  },
+  {
+    "path": "StarterGui.MainHUD.Inventory.CoreTextureSystem.TextureConfiguration.CoreTextureSystem",
+    "className": "Script",
+    "file": "studio-only/snapshots/StarterGui/029-CoreTextureSystem.server.luau"
+  },
+  {
+    "path": "StarterGui.MainHUD.Inventory.CoreTextureSystem.TextureConfiguration.CoreTextureSystem.TextureConfiguration",
+    "className": "ModuleScript",
+    "file": "studio-only/snapshots/StarterGui/030-TextureConfiguration.luau"
+  },
+  {
+    "path": "StarterGui.MainHUD.Inventory.Credist",
+    "className": "Script",
+    "file": "studio-only/snapshots/StarterGui/031-Credist.server.luau"
+  },
+  {
+    "path": "StarterGui.MainHUD.settingsopenframe.settingsopenbutton.settingsopenscript",
+    "className": "LocalScript",
+    "file": "studio-only/snapshots/StarterGui/032-settingsopenscript.client.luau"
+  },
+  {
+    "path": "StarterGui.MainHUD.settingsui.SettingsScript",
+    "className": "LocalScript",
+    "file": "studio-only/snapshots/StarterGui/033-SettingsScript.client.luau"
+  },
+  {
+    "path": "StarterGui.MainHUD.settingsui.Surface.Header.Tween",
+    "className": "LocalScript",
+    "file": "studio-only/snapshots/StarterGui/034-Tween.client.luau"
+  },
+  {
+    "path": "StarterGui.MainHUD.upgradesui.UpgradeController",
+    "className": "LocalScript",
+    "file": "studio-only/snapshots/StarterGui/035-UpgradeController.client.luau"
+  },
+  {
+    "path": "StarterGui.MainHUD.upgradesui.Surface.Header.Tween",
+    "className": "LocalScript",
+    "file": "studio-only/snapshots/StarterGui/036-Tween.client.luau"
+  },
+  {
+    "path": "StarterGui.MainHUD.Money.CashController",
+    "className": "LocalScript",
+    "file": "studio-only/snapshots/StarterGui/037-CashController.client.luau"
+  },
+  {
+    "path": "StarterGui.MainHUD.Money.CashPacksPlusController",
+    "className": "LocalScript",
+    "file": "studio-only/snapshots/StarterGui/038-CashPacksPlusController.client.luau"
+  },
+  {
+    "path": "StarterGui.MainHUD.Money.CashPacksPlus.JakeDevHoverClick",
+    "className": "LocalScript",
+    "file": "studio-only/snapshots/StarterGui/039-JakeDevHoverClick.client.luau"
+  },
+  {
+    "path": "StarterGui.MainHUD.playtimerewardsopenFrame.playtimerewardsopenbutton.NavIconWiggle",
+    "className": "LocalScript",
+    "file": "studio-only/snapshots/StarterGui/040-NavIconWiggle.client.luau"
+  },
+  {
+    "path": "StarterGui.MainHUD.FriendBoostHUD.Invite.JakeDevHoverClick",
+    "className": "LocalScript",
+    "file": "studio-only/snapshots/StarterGui/041-JakeDevHoverClick.client.luau"
+  },
+  {
+    "path": "StarterGui.MainHUD.SummonGroveQuickButton.SummonGroveButtonFX",
+    "className": "LocalScript",
+    "file": "studio-only/snapshots/StarterGui/042-SummonGroveButtonFX.client.luau"
+  },
+  {
+    "path": "StarterGui.MainHUD.SummonGroveQuickButton.Face.Tween",
+    "className": "LocalScript",
+    "file": "studio-only/snapshots/StarterGui/043-Tween.client.luau"
+  },
+  {
+    "path": "StarterGui.MainHUD.IndexPanel.Header.Tween",
+    "className": "LocalScript",
+    "file": "studio-only/snapshots/StarterGui/044-Tween.client.luau"
+  },
+  {
+    "path": "StarterGui.MainHUD.questsopenFrame.questsopenbutton.NavIconWiggle",
+    "className": "LocalScript",
+    "file": "studio-only/snapshots/StarterGui/045-NavIconWiggle.client.luau"
+  },
+  {
+    "path": "StarterGui.QuestsUI.QuestPanel.Header.Tween",
+    "className": "LocalScript",
+    "file": "studio-only/snapshots/StarterGui/046-Tween.client.luau"
+  }
+]
+

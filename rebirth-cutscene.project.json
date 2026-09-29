@@ -1,0 +1,23 @@
+{
+  "name": "Skip a Pebble! (rebirth cutscene only)",
+  "tree": {
+    "$className": "DataModel",
+    "StarterPlayer": {
+      "$className": "StarterPlayer",
+      "$ignoreUnknownInstances": true,
+      "StarterPlayerScripts": {
+        "$className": "StarterPlayerScripts",
+        "$ignoreUnknownInstances": true,
+        "AwakeningCinematic": {
+          "$path": "src/StarterPlayer/StarterPlayerScripts/AwakeningCinematic.luau"
+        },
+        "AwakeningMeridians": {
+          "$path": "src/StarterPlayer/StarterPlayerScripts/AwakeningMeridians.luau"
+        },
+        "AwakeningVFX": {
+          "$path": "src/StarterPlayer/StarterPlayerScripts/AwakeningVFX.luau"
+        }
+      }
+    }
+  }
+}

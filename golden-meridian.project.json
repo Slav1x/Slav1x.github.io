@@ -1,0 +1,39 @@
+{
+  "name": "Skip a Pebble! (rebirth cutscene + Golden Meridian client files only)",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "$className": "ReplicatedStorage",
+      "$ignoreUnknownInstances": true,
+      "Shared": {
+        "$className": "Folder",
+        "$ignoreUnknownInstances": true,
+        "AwakeningConfig": { "$path": "src/ReplicatedStorage/Shared/AwakeningConfig.luau" },
+        "GoldenMeridianConfig": { "$path": "src/ReplicatedStorage/Shared/GoldenMeridianConfig.luau" }
+      }
+    },
+    "StarterPlayer": {
+      "$className": "StarterPlayer",
+      "$ignoreUnknownInstances": true,
+      "StarterPlayerScripts": {
+        "$className": "StarterPlayerScripts",
+        "$ignoreUnknownInstances": true,
+        "AwakeningCinematic": { "$path": "src/StarterPlayer/StarterPlayerScripts/AwakeningCinematic.luau" },
+        "AwakeningMeridians": { "$path": "src/StarterPlayer/StarterPlayerScripts/AwakeningMeridians.luau" },
+        "AwakeningVFX": { "$path": "src/StarterPlayer/StarterPlayerScripts/AwakeningVFX.luau" },
+        "GoldenMeridianClient": { "$path": "src/StarterPlayer/StarterPlayerScripts/GoldenMeridianClient.client.luau" },
+        "GoldenDevPanel": { "$path": "src/StarterPlayer/StarterPlayerScripts/GoldenDevPanel.client.luau" },
+        "GoldenDirector": { "$path": "src/StarterPlayer/StarterPlayerScripts/GoldenDirector.luau" },
+        "GoldenAudio": { "$path": "src/StarterPlayer/StarterPlayerScripts/GoldenAudio.luau" },
+        "GoldenDialogue": { "$path": "src/StarterPlayer/StarterPlayerScripts/GoldenDialogue.luau" },
+        "GoldenRock": { "$path": "src/StarterPlayer/StarterPlayerScripts/GoldenRock.luau" },
+        "GoldenRockCinematic": { "$path": "src/StarterPlayer/StarterPlayerScripts/GoldenRockCinematic.luau" },
+        "SpiritRealm": { "$path": "src/StarterPlayer/StarterPlayerScripts/SpiritRealm.luau" },
+        "PebbleGod": { "$path": "src/StarterPlayer/StarterPlayerScripts/PebbleGod.luau" },
+        "DivineTrial": { "$path": "src/StarterPlayer/StarterPlayerScripts/DivineTrial.luau" },
+        "GoldenBlessing": { "$path": "src/StarterPlayer/StarterPlayerScripts/GoldenBlessing.luau" },
+        "GoldenEnding": { "$path": "src/StarterPlayer/StarterPlayerScripts/GoldenEnding.luau" }
+      }
+    }
+  }
+}
