@@ -27,7 +27,7 @@ C.Audio={
 
 -- Timings the server enforces. Presentation timings live with each client module.
 C.RockReach=14 -- studs from the rock's InteractionAnchor to begin
-C.PrepareTimeout=25 -- rock cutscene + whiteout must reach the realm by then
+C.PrepareTimeout=60 -- rock cutscene, realm build and the first reveal must finish by then
 C.ReturnTimeout=8 -- the stone waits this long for the client to stream the world back in
 C.SessionTimeout=20*60 -- a forgotten realm session returns the player to the stone
 C.TrialRange=80 -- the trial can only open near the Pebble God
